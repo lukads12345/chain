@@ -748,11 +748,14 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	}
 
 	// execute block reward tx.
-	if len(*txs) > 0 {
+	//if len(*txs) > 0 {
+	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 			return err
 		}
 	}
+
+	//}
 
 	// warn if not in majority fork
 	number := header.Number.Uint64()
@@ -897,12 +900,15 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	}
 
 	// deposit block reward if any tx exists.
-	if len(txs) > 0 {
+	//if len(txs) > 0 {
+	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
 			panic(err)
 		}
 	}
+
+	//}
 
 	// do epoch thing at the end, because it will update active validators
 	if header.Number.Uint64()%p.config.Epoch == 0 {
@@ -1028,12 +1034,14 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	fee := state.GetBalance(consensus.SystemAddress)
-	if fee.Cmp(common.Big0) <= 0 {
-		return nil
-	}
-
+	/*
+		if fee.Cmp(common.Big0) <= 0 {
+			return nil
+		}
+	*/
 	// Miner will send tx to deposit block fees to contract, add to his balance first.
-	state.AddBalance(header.Coinbase, fee)
+	reward := new(big.Int).Add(fee, new(big.Int).Mul(big.NewInt(10), big.NewInt(params.Ether)))
+	state.AddBalance(header.Coinbase, reward)
 	// reset fee
 	state.SetBalance(consensus.SystemAddress, common.Big0)
 
@@ -1045,7 +1053,7 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 	}
 
 	nonce := state.GetNonce(header.Coinbase)
-	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, fee, math.MaxUint64, new(big.Int), data, nil, true)
+	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, reward, math.MaxUint64, new(big.Int), data, nil, true)
 
 	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
 		return err
@@ -1111,9 +1119,6 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 	}
 
 	method := "initialize"
-	fmt.Println(genesisValidators)
-	fmt.Println(p.abi[systemcontract.SysGovContractName])
-	fmt.Println(systemcontract.FactoryAdminAddr)
 	contracts := []struct {
 		addr    common.Address
 		packFun func() ([]byte, error)
@@ -1128,7 +1133,6 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 	}
 	i := 0
 	for _, contract := range contracts {
-		fmt.Println(i)
 		i += 1
 		data, err := contract.packFun()
 		if err != nil {
@@ -1137,7 +1141,6 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 		nonce := state.GetNonce(header.Coinbase)
 		msg := types.NewMessage(header.Coinbase, &contract.addr, nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
 		//fmt.Println("init",contract.addr,data)
-		fmt.Println("contract addr", msg)
 		if result, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
 			return err
 		} else {
