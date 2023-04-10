@@ -1,14 +1,8 @@
 package systemcontract
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/parlia/vmcaller"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"math"
+	"PureChain/core/state"
+	"PureChain/params"
 	"math/big"
 )
 
@@ -20,30 +14,38 @@ type hardForkPunishV1 struct {
 }
 
 func (s *hardForkPunishV1) GetName() string {
-	return PunishV1ContractName
+	return ""
+	/*
+		return PunishV1ContractName
+
+	*/
 }
 
 func (s *hardForkPunishV1) Update(config *params.ChainConfig, height *big.Int, state *state.StateDB) (err error) {
-	contractCode := common.FromHex(punishV1Code)
+	return nil
+	/*
+			contractCode := common.FromHex(punishV1Code)
 
-	//write code to sys contract
-	state.SetCode(PunishV1ContractAddr, contractCode)
-	log.Debug("Write code to system contract account", "addr", PunishV1ContractAddr.String(), "code", punishV1Code)
+			//write code to sys contract
+			state.SetCode(PunishV1ContractAddr, contractCode)
+			log.Debug("Write code to system contract account", "addr", PunishV1ContractAddr.String(), "code", punishV1Code)
 
-	return
-}
+			return
+		}
 
-func (s *hardForkPunishV1) Execute(state *state.StateDB, header *types.Header, chainContext core.ChainContext, config *params.ChainConfig) (err error) {
-	// initialize v1 contract
-	method := "initialize"
-	data, err := GetInteractiveABI()[s.GetName()].Pack(method)
-	if err != nil {
-		log.Error("Can't pack data for initialize", "error", err)
-		return err
-	}
+		func (s *hardForkPunishV1) Execute(state *state.StateDB, header *types.Header, chainContext core.ChainContext, config *params.ChainConfig) (err error) {
+			// initialize v1 contract
+			method := "initialize"
+			data, err := GetInteractiveABI()[s.GetName()].Pack(method)
+			if err != nil {
+				log.Error("Can't pack data for initialize", "error", err)
+				return err
+			}
 
-	msg := types.NewMessage(header.Coinbase, &PunishV1ContractAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
-	_, err = vmcaller.ExecuteMsg(msg, state, header, chainContext, config)
+			msg := types.NewMessage(header.Coinbase, &PunishV1ContractAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+			_, err = vmcaller.ExecuteMsg(msg, state, header, chainContext, config)
 
-	return
+			return
+
+	*/
 }

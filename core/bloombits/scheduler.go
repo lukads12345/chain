@@ -19,7 +19,7 @@ package bloombits
 import (
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common/gopool"
+	"PureChain/common/gopool"
 )
 
 // request represents a bloom retrieval task to prioritize and pull from the local

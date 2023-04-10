@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/log"
+	"PureChain/accounts"
+	"PureChain/accounts/keystore"
+	"PureChain/cmd/utils"
+	"PureChain/crypto"
+	"PureChain/log"
 	"gopkg.in/urfave/cli.v1"
 )
 

@@ -30,13 +30,13 @@ import (
 	"testing"
 	"testing/quick"
 
+	"PureChain/common"
+	"PureChain/crypto"
+	"PureChain/ethdb"
+	"PureChain/ethdb/leveldb"
+	"PureChain/ethdb/memorydb"
+	"PureChain/rlp"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/ethdb/leveldb"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
-	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/sha3"
 )
 

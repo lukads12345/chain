@@ -33,9 +33,9 @@ import (
 
 	"github.com/VictoriaMetrics/fastcache"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/common"
+	"PureChain/common/math"
+	"PureChain/rlp"
 	"golang.org/x/crypto/sha3"
 )
 

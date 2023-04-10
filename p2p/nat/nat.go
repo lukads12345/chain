@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/gopool"
+	"PureChain/common/gopool"
 
-	"github.com/ethereum/go-ethereum/log"
+	"PureChain/log"
 	natpmp "github.com/jackpal/go-nat-pmp"
 )
 

@@ -31,7 +31,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/params"
 )
 
 // Command line flags to configure the interpreters.

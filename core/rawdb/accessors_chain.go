@@ -22,13 +22,13 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/common"
+	"PureChain/core/types"
+	"PureChain/crypto"
+	"PureChain/ethdb"
+	"PureChain/log"
+	"PureChain/params"
+	"PureChain/rlp"
 )
 
 // ReadCanonicalHash retrieves the hash assigned to a canonical block number.

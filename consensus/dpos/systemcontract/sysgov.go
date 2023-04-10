@@ -1,14 +1,11 @@
 package systemcontract
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus/parlia/vmcaller"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"math"
+	"PureChain/common"
+	"PureChain/core"
+	"PureChain/core/state"
+	"PureChain/core/types"
+	"PureChain/params"
 	"math/big"
 )
 
@@ -25,17 +22,21 @@ type hardForkSysGov struct {
 }
 
 func (s *hardForkSysGov) GetName() string {
-	return SysGovContractName
+	return ""
+	//return SysGovContractName
 }
 
 func (s *hardForkSysGov) Update(config *params.ChainConfig, height *big.Int, state *state.StateDB) (err error) {
-	contractCode := common.FromHex(govCode)
+	return nil
+	/*
+		contractCode := common.FromHex(govCode)
 
-	//write govCode to sys contract
-	state.SetCode(SysGovContractAddr, contractCode)
-	log.Debug("Write code to system contract account", "addr", SysGovContractAddr.String(), "code", govCode)
+		//write govCode to sys contract
+		state.SetCode(SysGovContractAddr, contractCode)
+		log.Debug("Write code to system contract account", "addr", SysGovContractAddr.String(), "code", govCode)
 
-	return
+		return
+	*/
 }
 
 func (s *hardForkSysGov) getAdminByChainId(chainId *big.Int) common.Address {
@@ -47,20 +48,23 @@ func (s *hardForkSysGov) getAdminByChainId(chainId *big.Int) common.Address {
 }
 
 func (s *hardForkSysGov) Execute(state *state.StateDB, header *types.Header, chainContext core.ChainContext, config *params.ChainConfig) (err error) {
+	return nil
+	/*
+		method := "initialize"
+		data, err := GetInteractiveABI()[SysGovContractName].Pack(method, s.getAdminByChainId(config.ChainID))
+		if err != nil {
+			log.Error("Can't pack data for initialize", "error", err)
+			return err
+		}
 
-	method := "initialize"
-	data, err := GetInteractiveABI()[SysGovContractName].Pack(method, s.getAdminByChainId(config.ChainID))
-	if err != nil {
-		log.Error("Can't pack data for initialize", "error", err)
-		return err
-	}
+		msg := types.NewMessage(header.Coinbase, &SysGovContractAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+		vmcaller.ExecuteMsg(msg, state, header, chainContext, config)
+		//context := core.NewEVMContext(msg, header, chainContext, nil)
+		//evm := vm.NewEVM(context, state, config, vm.Config{})
+		//
+		//_, _, err = evm.Call(vm.AccountRef(msg.From()), *msg.To(), msg.Data(), msg.Gas(), msg.Value())
 
-	msg := types.NewMessage(header.Coinbase, &SysGovContractAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
-	vmcaller.ExecuteMsg(msg, state, header, chainContext, config)
-	//context := core.NewEVMContext(msg, header, chainContext, nil)
-	//evm := vm.NewEVM(context, state, config, vm.Config{})
-	//
-	//_, _, err = evm.Call(vm.AccountRef(msg.From()), *msg.To(), msg.Data(), msg.Gas(), msg.Value())
+		return
 
-	return
+	*/
 }

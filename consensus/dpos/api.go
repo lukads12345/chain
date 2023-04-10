@@ -19,10 +19,10 @@ package dpos
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rpc"
+	"PureChain/common"
+	"PureChain/consensus"
+	"PureChain/core/types"
+	"PureChain/rpc"
 )
 
 // API is a user facing RPC API to allow controlling the validator and voting

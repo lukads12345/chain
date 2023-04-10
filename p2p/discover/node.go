@@ -24,9 +24,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/p2p/enode"
+	"PureChain/common/math"
+	"PureChain/crypto"
+	"PureChain/p2p/enode"
 )
 
 // node represents a host on the network.

@@ -23,16 +23,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/core/forkid"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/eth/protocols/eth"
-	"github.com/ethereum/go-ethereum/light"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/common"
+	"PureChain/common/mclock"
+	"PureChain/core/forkid"
+	"PureChain/core/types"
+	"PureChain/eth/downloader"
+	"PureChain/eth/protocols/eth"
+	"PureChain/light"
+	"PureChain/log"
+	"PureChain/p2p"
+	"PureChain/params"
 )
 
 // clientHandler is responsible for receiving and processing all incoming server

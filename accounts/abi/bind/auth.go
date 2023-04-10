@@ -23,13 +23,13 @@ import (
 	"io/ioutil"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/external"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/log"
+	"PureChain/accounts"
+	"PureChain/accounts/external"
+	"PureChain/accounts/keystore"
+	"PureChain/common"
+	"PureChain/core/types"
+	"PureChain/crypto"
+	"PureChain/log"
 )
 
 // ErrNoChainID is returned whenever the user failed to specify a chain id.

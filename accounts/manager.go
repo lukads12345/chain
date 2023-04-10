@@ -21,8 +21,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/event"
+	"PureChain/common"
+	"PureChain/event"
 )
 
 // Config contains the settings of the global account manager.

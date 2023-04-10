@@ -21,13 +21,13 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
+	"PureChain/common"
 	"golang.org/x/crypto/sha3"
 )
 
 // Genesis hashes to enforce below configs on.
 var (
-	MainnetGenesisHash = common.HexToHash("0x046a58a73024f2016b2425a13c4c82f4a52b16e281cd197fbd3a463604b65a79")
+	MainnetGenesisHash = common.HexToHash("0xc7292b12771924714a6929d30b2e369577fa2c5bf03abad17ea0f2547f3d64b1")
 	TestnetGenesisHash = common.HexToHash("0x00ddd8230d6e2fbc257d9c10d87b5312e7a34c13165d2b2170fbdbcbdff8b0bc")
 )
 
@@ -68,7 +68,7 @@ var (
 		RedCoastBlock:       big.NewInt(22222222220),
 		//Ethash:              new(EthashConfig),
 		Dpos: &DposConfig{
-			Period: 5,
+			Period: 2,
 			Epoch:  200,
 		},
 	}
@@ -94,7 +94,7 @@ var (
 		RedCoastBlock:       big.NewInt(2),
 		//Ethash:              new(EthashConfig),
 		Dpos: &DposConfig{
-			Period: 5,
+			Period: 2,
 			Epoch:  200,
 		},
 	}

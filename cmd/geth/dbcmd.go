@@ -24,14 +24,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum/cmd/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/console/prompt"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/trie"
+	"PureChain/cmd/utils"
+	"PureChain/common"
+	"PureChain/common/hexutil"
+	"PureChain/console/prompt"
+	"PureChain/core/rawdb"
+	"PureChain/ethdb"
+	"PureChain/log"
+	"PureChain/trie"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -141,7 +141,6 @@ WARNING: This is a low-level operation which may cause database corruption!`,
 			utils.SyncModeFlag,
 			utils.MainnetFlag,
 			utils.TestnetFlag,
-
 		},
 		Description: `This command sets a given database key to the given value. 
 WARNING: This is a low-level operation which may cause database corruption!`,
@@ -156,7 +155,6 @@ WARNING: This is a low-level operation which may cause database corruption!`,
 			utils.SyncModeFlag,
 			utils.MainnetFlag,
 			utils.TestnetFlag,
-
 		},
 		Description: "This command looks up the specified database key from the database.",
 	}

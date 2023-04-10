@@ -22,12 +22,12 @@ import (
 	"os"
 	"strings"
 
+	"PureChain/internal/ethapi"
+	"PureChain/log"
+	"PureChain/signer/core"
+	"PureChain/signer/rules/deps"
+	"PureChain/signer/storage"
 	"github.com/dop251/goja"
-	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/signer/core"
-	"github.com/ethereum/go-ethereum/signer/rules/deps"
-	"github.com/ethereum/go-ethereum/signer/storage"
 )
 
 var (

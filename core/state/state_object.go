@@ -23,10 +23,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/metrics"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/common"
+	"PureChain/crypto"
+	"PureChain/metrics"
+	"PureChain/rlp"
 )
 
 var emptyCodeHash = crypto.Keccak256(nil)
@@ -575,7 +575,6 @@ func (s *StateObject) Nonce() uint64 {
 func (s *StateObject) Value() *big.Int {
 	panic("Value on StateObject should never be called")
 }
-
 
 func (s *StateObject) erase() {
 	prevcode := s.Code(s.db.db)

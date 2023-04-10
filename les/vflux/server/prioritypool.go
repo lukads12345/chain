@@ -21,11 +21,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/common/prque"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/nodestate"
+	"PureChain/common/mclock"
+	"PureChain/common/prque"
+	"PureChain/log"
+	"PureChain/p2p/enode"
+	"PureChain/p2p/nodestate"
 )
 
 const (

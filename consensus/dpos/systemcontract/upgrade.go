@@ -1,11 +1,11 @@
 package systemcontract
 
 import (
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/core"
+	"PureChain/core/state"
+	"PureChain/core/types"
+	"PureChain/log"
+	"PureChain/params"
 	"math/big"
 )
 

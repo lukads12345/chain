@@ -20,8 +20,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"PureChain/common"
+	"PureChain/core/types"
 )
 
 // accessList is an accumulator for the set of accounts and storage slots an EVM

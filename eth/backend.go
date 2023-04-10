@@ -18,45 +18,45 @@
 package eth
 
 import (
+	"PureChain/consensus/dpos"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/consensus/dpos"
 	"math/big"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/consensus/parlia"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/bloombits"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/state/pruner"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/eth/downloader"
-	"github.com/ethereum/go-ethereum/eth/ethconfig"
-	"github.com/ethereum/go-ethereum/eth/filters"
-	"github.com/ethereum/go-ethereum/eth/gasprice"
-	"github.com/ethereum/go-ethereum/eth/protocols/eth"
-	"github.com/ethereum/go-ethereum/eth/protocols/snap"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/event"
-	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/miner"
-	"github.com/ethereum/go-ethereum/node"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/dnsdisc"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/rpc"
+	"PureChain/accounts"
+	"PureChain/common"
+	"PureChain/common/hexutil"
+	"PureChain/consensus"
+	"PureChain/consensus/clique"
+	"PureChain/consensus/parlia"
+	"PureChain/core"
+	"PureChain/core/bloombits"
+	"PureChain/core/rawdb"
+	"PureChain/core/state/pruner"
+	"PureChain/core/types"
+	"PureChain/core/vm"
+	"PureChain/eth/downloader"
+	"PureChain/eth/ethconfig"
+	"PureChain/eth/filters"
+	"PureChain/eth/gasprice"
+	"PureChain/eth/protocols/eth"
+	"PureChain/eth/protocols/snap"
+	"PureChain/ethdb"
+	"PureChain/event"
+	"PureChain/internal/ethapi"
+	"PureChain/log"
+	"PureChain/miner"
+	"PureChain/node"
+	"PureChain/p2p"
+	"PureChain/p2p/dnsdisc"
+	"PureChain/p2p/enode"
+	"PureChain/params"
+	"PureChain/rlp"
+	"PureChain/rpc"
 )
 
 // Config contains the configuration options of the ETH protocol.
@@ -638,7 +638,7 @@ func (s *Ethereum) Stop() error {
 	s.txPool.Stop()
 	s.miner.Stop()
 	s.miner.Close()
-	// TODO this is a hotfix for https://github.com/ethereum/go-ethereum/issues/22892, need a better solution
+	// TODO this is a hotfix for https://github.com/Project-DeCloud/chain/issues/22892, need a better solution
 	time.Sleep(5 * time.Second)
 	s.blockchain.Stop()
 	s.engine.Close()

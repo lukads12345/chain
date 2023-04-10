@@ -21,14 +21,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/internal/debug"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/rpc"
+	"PureChain/common/gopool"
+	"PureChain/common/hexutil"
+	"PureChain/crypto"
+	"PureChain/internal/debug"
+	"PureChain/log"
+	"PureChain/p2p"
+	"PureChain/p2p/enode"
+	"PureChain/rpc"
 )
 
 // apis returns the collection of built-in RPC APIs.

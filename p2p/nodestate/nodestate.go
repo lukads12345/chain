@@ -23,13 +23,13 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/enr"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/common/mclock"
+	"PureChain/ethdb"
+	"PureChain/log"
+	"PureChain/metrics"
+	"PureChain/p2p/enode"
+	"PureChain/p2p/enr"
+	"PureChain/rlp"
 )
 
 var (

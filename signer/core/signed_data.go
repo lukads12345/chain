@@ -17,11 +17,11 @@
 package core
 
 import (
+	"PureChain/consensus/dpos"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/consensus/dpos"
 	"math/big"
 	"mime"
 	"reflect"
@@ -31,15 +31,15 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/consensus/clique"
-	"github.com/ethereum/go-ethereum/consensus/parlia"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/accounts"
+	"PureChain/common"
+	"PureChain/common/hexutil"
+	"PureChain/common/math"
+	"PureChain/consensus/clique"
+	"PureChain/consensus/parlia"
+	"PureChain/core/types"
+	"PureChain/crypto"
+	"PureChain/rlp"
 )
 
 type SigFormat struct {
@@ -751,7 +751,7 @@ func (api *SignerAPI) EcRecover(ctx context.Context, data hexutil.Bytes, sig hex
 	// Note, the signature must conform to the secp256k1 curve R, S and V values, where
 	// the V value must be be 27 or 28 for legacy reasons.
 	//
-	// https://github.com/ethereum/go-ethereum/wiki/Management-APIs#personal_ecRecover
+	// https://github.com/Project-DeCloud/chain/wiki/Management-APIs#personal_ecRecover
 	if len(sig) != 65 {
 		return common.Address{}, fmt.Errorf("signature must be 65 bytes long")
 	}

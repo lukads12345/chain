@@ -23,8 +23,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"PureChain/common"
+	"PureChain/core/types"
 )
 
 var txSortedMapPool = sync.Pool{

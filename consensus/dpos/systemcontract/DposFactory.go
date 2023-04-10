@@ -1,12 +1,11 @@
 package systemcontract
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/common"
+	"PureChain/core"
+	"PureChain/core/state"
+	"PureChain/core/types"
+	"PureChain/params"
 	"math/big"
 )
 
@@ -23,17 +22,22 @@ type hardForkValidatorsV1 struct {
 }
 
 func (s *hardForkValidatorsV1) GetName() string {
-	return DposFactoryContractName
+	return ""
+	/*
+		return DposFactoryContractName
+	*/
 }
 
 func (s *hardForkValidatorsV1) Update(config *params.ChainConfig, height *big.Int, state *state.StateDB) (err error) {
-	contractCode := common.FromHex(validatorV1Code)
+	return nil
+	/*
+		contractCode := common.FromHex(validatorV1Code)
 
-	//write code to sys contract
-	state.SetCode(DposFactoryContractAddr, contractCode)
-	log.Debug("Write code to system contract account", "addr", DposFactoryContractAddr.String(), "code", validatorV1Code)
+		//write code to sys contract
+		state.SetCode(DposFactoryContractAddr, contractCode)
+		log.Debug("Write code to system contract account", "addr", DposFactoryContractAddr.String(), "code", validatorV1Code)
 
-	return
+		return*/
 }
 
 func (s *hardForkValidatorsV1) getAdminByChainId(chainId *big.Int) common.Address {

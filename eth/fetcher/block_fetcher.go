@@ -22,14 +22,14 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/common/prque"
-	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/metrics"
-	"github.com/ethereum/go-ethereum/trie"
+	"PureChain/common"
+	"PureChain/common/gopool"
+	"PureChain/common/prque"
+	"PureChain/consensus"
+	"PureChain/core/types"
+	"PureChain/log"
+	"PureChain/metrics"
+	"PureChain/trie"
 )
 
 const (

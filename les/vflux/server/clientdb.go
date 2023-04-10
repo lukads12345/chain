@@ -21,13 +21,13 @@ import (
 	"encoding/binary"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/les/utils"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/common"
+	"PureChain/common/mclock"
+	"PureChain/ethdb"
+	"PureChain/les/utils"
+	"PureChain/log"
+	"PureChain/p2p/enode"
+	"PureChain/rlp"
 	lru "github.com/hashicorp/golang-lru"
 )
 

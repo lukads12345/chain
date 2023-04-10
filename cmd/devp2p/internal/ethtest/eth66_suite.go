@@ -19,12 +19,12 @@ package ethtest
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth/protocols/eth"
-	"github.com/ethereum/go-ethereum/internal/utesting"
-	"github.com/ethereum/go-ethereum/p2p"
+	"PureChain/common"
+	"PureChain/core/types"
+	"PureChain/crypto"
+	"PureChain/eth/protocols/eth"
+	"PureChain/internal/utesting"
+	"PureChain/p2p"
 )
 
 // Is_66 checks if the node supports the eth66 protocol version,

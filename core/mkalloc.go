@@ -13,7 +13,7 @@
 //
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
-
+//go:build none
 // +build none
 
 /*
@@ -27,18 +27,20 @@
 package main
 
 import (
+	"PureChain/core"
+	"PureChain/rlp"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 	"sort"
 	"strconv"
-	"os"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
-type allocItem struct{ Addr, Balance *big.Int
-	Code    []byte}
+type allocItem struct {
+	Addr, Balance *big.Int
+	Code          []byte
+}
 
 type allocList []allocItem
 
@@ -73,15 +75,25 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Usage: mkalloc genesis.json")
 		os.Exit(1)
 	}
-
 	g := new(core.Genesis)
-	file, err := os.Open(os.Args[1])
-	//file, err := os.Open("H:\\XWC\\bsc\\core\\genesis.json")
+	//file, err := os.Open(os.Args[1])
+	file, err := os.Open("G:\\purewhite\\chain\\core\\genesis.json")
 	if err != nil {
 		panic(err)
 	}
 	if err := json.NewDecoder(file).Decode(g); err != nil {
 		panic(err)
 	}
-	fmt.Println("const allocData =", makealloc(g))
+	cc, err := os.Create("G:\\purewhite\\chain\\core\\mkalloc.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		cc.Close()
+	}()
+	_, err = cc.Write([]byte(makealloc(g)))
+	if err != nil {
+		panic(err)
+	}
+	//fmt.Println("const allocData =", makealloc(g))
 }

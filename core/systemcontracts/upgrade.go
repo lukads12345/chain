@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/common"
+	"PureChain/core/state"
+	"PureChain/log"
+	"PureChain/params"
 )
 
 type UpgradeConfig struct {

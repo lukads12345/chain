@@ -26,14 +26,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain"
+	"PureChain/accounts/abi"
+	"PureChain/accounts/abi/bind"
+	"PureChain/common"
+	"PureChain/core"
+	"PureChain/core/types"
+	"PureChain/crypto"
+	"PureChain/params"
 )
 
 func TestSimulatedBackend(t *testing.T) {

@@ -22,10 +22,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethdb/memorydb"
+	"PureChain/common"
+	"PureChain/common/gopool"
+	"PureChain/crypto"
+	"PureChain/ethdb/memorydb"
 )
 
 func newEmptySecure() *SecureTrie {

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/gopool"
+	"PureChain/common/gopool"
 	natpmp "github.com/jackpal/go-nat-pmp"
 )
 

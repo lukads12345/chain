@@ -22,11 +22,11 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rpc"
+	"PureChain/common"
+	"PureChain/core/types"
+	"PureChain/log"
+	"PureChain/params"
+	"PureChain/rpc"
 )
 
 const sampleNumber = 3 // Number of transactions sampled in a block

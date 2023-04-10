@@ -1,9 +1,9 @@
 package systemcontract
 
 import (
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/params"
+	"PureChain/accounts/abi"
+	"PureChain/common"
+	"PureChain/params"
 	"math/big"
 	"strings"
 )
@@ -481,7 +481,6 @@ func init() {
 func GetInteractiveABI() map[string]abi.ABI {
 	return abiMap
 }
-
 
 func GetValidatorAddr(blockNum *big.Int, config *params.ChainConfig) *common.Address {
 	if config.IsRedCoast(blockNum) {

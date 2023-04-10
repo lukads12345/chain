@@ -25,10 +25,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/core/forkid"
-	"github.com/ethereum/go-ethereum/p2p/enr"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
+	"PureChain/core/forkid"
+	"PureChain/p2p/enr"
+	"PureChain/params"
+	"PureChain/rlp"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -230,15 +230,15 @@ func ethFilter(args []string) (nodeFilter, error) {
 	case "mainnet":
 		filter = forkid.NewStaticFilter(params.MainnetChainConfig, params.MainnetGenesisHash)
 	case "testnet":
-		filter = forkid.NewStaticFilter(params.TestnetChainConfig,params.TestnetGenesisHash)
+		filter = forkid.NewStaticFilter(params.TestnetChainConfig, params.TestnetGenesisHash)
 	/*
-	case "rinkeby":
-		filter = forkid.NewStaticFilter(params.RinkebyChainConfig, params.RinkebyGenesisHash)
-	case "goerli":
-		filter = forkid.NewStaticFilter(params.GoerliChainConfig, params.GoerliGenesisHash)
-	case "ropsten":
-		filter = forkid.NewStaticFilter(params.RopstenChainConfig, params.RopstenGenesisHash)
-		*/
+		case "rinkeby":
+			filter = forkid.NewStaticFilter(params.RinkebyChainConfig, params.RinkebyGenesisHash)
+		case "goerli":
+			filter = forkid.NewStaticFilter(params.GoerliChainConfig, params.GoerliGenesisHash)
+		case "ropsten":
+			filter = forkid.NewStaticFilter(params.RopstenChainConfig, params.RopstenGenesisHash)
+	*/
 	default:
 		return nil, fmt.Errorf("unknown network %q", args[0])
 	}

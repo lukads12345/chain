@@ -19,7 +19,7 @@ package abi
 import (
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
+	"PureChain/common"
 )
 
 type packUnpackTest struct {

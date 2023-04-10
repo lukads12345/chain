@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/common/mclock"
+	"PureChain/common/gopool"
+	"PureChain/common/mclock"
 )
 
 // Subscription represents a stream of events. The carrier of the events is typically a

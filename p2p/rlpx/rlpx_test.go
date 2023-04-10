@@ -27,10 +27,10 @@ import (
 	"strings"
 	"testing"
 
+	"PureChain/crypto"
+	"PureChain/crypto/ecies"
+	"PureChain/rlp"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/stretchr/testify/assert"
 )
 

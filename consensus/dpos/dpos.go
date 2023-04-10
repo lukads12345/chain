@@ -1,14 +1,14 @@
 package dpos
 
 import (
+	"PureChain"
+	"PureChain/metrics"
 	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/metrics"
 	"io"
 	"math"
 	"math/big"
@@ -21,30 +21,30 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"golang.org/x/crypto/sha3"
 
-	_ "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/consensus/dpos/systemcontract"
-	"github.com/ethereum/go-ethereum/consensus/dpos/vmcaller"
-	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/forkid"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/systemcontracts"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/internal/ethapi"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/trie"
+	_ "PureChain"
+	"PureChain/accounts"
+	"PureChain/accounts/abi"
+	"PureChain/common"
+	"PureChain/common/gopool"
+	"PureChain/common/hexutil"
+	"PureChain/consensus"
+	"PureChain/consensus/dpos/systemcontract"
+	"PureChain/consensus/dpos/vmcaller"
+	"PureChain/consensus/misc"
+	"PureChain/core"
+	"PureChain/core/forkid"
+	"PureChain/core/state"
+	"PureChain/core/systemcontracts"
+	"PureChain/core/types"
+	"PureChain/core/vm"
+	"PureChain/crypto"
+	"PureChain/ethdb"
+	"PureChain/internal/ethapi"
+	"PureChain/log"
+	"PureChain/params"
+	"PureChain/rlp"
+	"PureChain/rpc"
+	"PureChain/trie"
 )
 
 const (
@@ -79,13 +79,21 @@ var (
 	diffInTurn = big.NewInt(2)            // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1)            // Block difficulty for out-of-turn signatures
 	// 100 native token
-	maxSystemBalance = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
-
-	systemContracts = map[common.Address]bool{
-		systemcontract.DposFactoryContractAddr: true,
-		systemcontract.AddressListContractAddr: true,
-		systemcontract.PunishV1ContractAddr:    true,
-		systemcontract.SysGovContractAddr:      true,
+	maxSystemBalance    = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
+	ProviderFactoryAddr = common.Address{}
+	StakeThreshold      = new(big.Int).Mul(big.NewInt(500), big.NewInt(params.Ether))
+	LuckyRate           = big.NewInt(6)
+	LuckyPorRate        = big.NewInt(4)
+	MaxStorage          = big.NewInt(1)
+	MaxMemory           = big.NewInt(4)
+	systemContracts     = map[common.Address]bool{
+		systemcontract.ValidatorFactoryContractAddr: true,
+		/*
+			systemcontract.DposFactoryContractAddr: true,
+			systemcontract.AddressListContractAddr: true,
+			systemcontract.PunishV1ContractAddr:    true,
+			systemcontract.SysGovContractAddr:      true,
+		*/
 	}
 )
 
@@ -124,6 +132,12 @@ var (
 
 	// errInvalidUncleHash is returned if a block contains an non-empty uncle list.
 	errInvalidUncleHash = errors.New("non empty uncle hash")
+
+	// errInvalidProvider is returned if a block calculate illegal provider.
+	errInvalidProvider = errors.New("illegal provider")
+
+	// errInvalidDistributeRate is returned if a block set illegal distribute rate.
+	errInvalidDistributeRate = errors.New("illegal distribute rate")
 
 	// errMismatchingEpochValidators is returned if a sprint block contains a
 	// list of validators different than the one the local node calculated.
@@ -183,6 +197,37 @@ type StateFn func(hash common.Hash) (*state.StateDB, error)
 
 type SignerFn func(accounts.Account, string, []byte) ([]byte, error)
 type SignerTxFn func(accounts.Account, *types.Transaction, *big.Int) (*types.Transaction, error)
+
+type VoteInfo struct {
+	ProviderAddress common.Address `json:"provider_address"`
+	VotingPower     *big.Int       `json:"voting_power"`
+}
+type ProviderInfos struct {
+	ProviderContract common.Address
+	Info             providerInfo
+	MarginAmount     *big.Int
+	Audits           []common.Address
+}
+
+// poaResource is an auto generated low-level Go binding around an user-defined struct.
+type poaResource struct {
+	CpuCount     *big.Int
+	MemoryCount  *big.Int
+	StorageCount *big.Int
+}
+
+// providerInfo is an auto generated low-level Go binding around an user-defined struct.
+type providerInfo struct {
+	Total             poaResource
+	Used              poaResource
+	Lock              poaResource
+	Challenge         bool
+	State             uint8
+	Owner             common.Address
+	Region            string
+	Info              string
+	LastChallengeTime *big.Int
+}
 
 func isToSystemContract(to common.Address) bool {
 	return systemContracts[to]
@@ -379,6 +424,7 @@ func (p *Dpos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	if header.Number == nil {
 		return errUnknownBlock
 	}
+
 	number := header.Number.Uint64()
 
 	// Don't waste time checking blocks from the future
@@ -409,6 +455,7 @@ func (p *Dpos) verifyHeader(chain consensus.ChainHeaderReader, header *types.Hea
 	if header.MixDigest != (common.Hash{}) {
 		return errInvalidMixDigest
 	}
+
 	// Ensure that the block doesn't contain any uncles which are meaningless in PoA
 	if header.UncleHash != uncleHash {
 		return errInvalidUncleHash
@@ -678,6 +725,48 @@ func (p *Dpos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	if err != nil {
 		return err
 	}
+	//TODO: 获取质押合约的参数
+	providerDetailData, err := p.getProviderInfo(chain, header)
+	if err != nil {
+		log.Error("getProviderInfo error", "error", err)
+	}
+
+	realTeamRate, realValRate := p.getDistributeRate(chain, header)
+	totalVote := big.NewInt(0)
+	for _, k := range providerDetailData {
+		totalVote.Add(totalVote, k.VotingPower)
+	}
+	if totalVote.Cmp(common.Big0) > 0 {
+		parentHeader := chain.GetHeaderByHash(header.ParentHash)
+		if parentHeader != nil {
+			calRlp, err := rlp.EncodeToBytes([]interface{}{parentHeader.Root, header.ParentHash, parentHeader.Coinbase, parentHeader.Time})
+			if err != nil {
+				return err
+			}
+
+			calHash := crypto.Keccak256(calRlp)
+			magicNumber := big.NewInt(0).SetBytes(calHash)
+			magicNumber.Mod(magicNumber, totalVote)
+			currentVote := big.NewInt(0)
+
+			for _, v := range providerDetailData {
+				currentVote.Add(currentVote, v.VotingPower)
+				if magicNumber.Cmp(currentVote) < 0 {
+					header.Provider = v.ProviderAddress
+					log.Info("Choose provider", "provider", v.ProviderAddress, "votepower", v.VotingPower, "currentVote", currentVote)
+					break
+				}
+			}
+		} else {
+
+			header.Provider = common.Address{}
+		}
+	} else {
+		header.Provider = common.Address{}
+
+	}
+	header.TeamRate = realTeamRate
+	header.ValidatorRate = realValRate
 
 	// Set the correct difficulty
 	header.Difficulty = CalcDifficulty(snap, p.val)
@@ -732,11 +821,15 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			return err
 		}
 	}
-	if header.Difficulty.Cmp(diffInTurn) != 0 {
-		if err := p.tryPunishValidator(chain, header, state); err != nil {
-			return err
-		}
+	if err := p.tryPunishValidator(chain, header, state); err != nil {
+		return err
 	}
+	/*
+		if header.Difficulty.Cmp(diffInTurn) != 0 {
+			if err := p.tryPunishValidator(chain, header, state); err != nil {
+				return err
+			}
+		}*/
 	// avoid nil pointer
 	if txs == nil {
 		s := make([]*types.Transaction, 0)
@@ -840,7 +933,61 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			}
 		}
 	}
+	//TODO: 获取质押合约的参数
 
+	realTeamRate, realValRate := p.getDistributeRate(chain, header)
+
+	providerLuckyData, err := p.getProviderInfo(chain, header)
+	if err != nil {
+		log.Error("get provider info failed", "error", err.Error())
+	}
+
+	tmpProvider := common.Address{}
+	totalVote := big.NewInt(0)
+	for _, k := range providerLuckyData {
+		totalVote.Add(totalVote, k.VotingPower)
+	}
+	if totalVote.Cmp(common.Big0) > 0 {
+		parentHeader := chain.GetHeaderByHash(header.ParentHash)
+
+		if parentHeader != nil {
+			calRlp, err := rlp.EncodeToBytes([]interface{}{parentHeader.Root, header.ParentHash, parentHeader.Coinbase, parentHeader.Time})
+			if err != nil {
+				return err
+			}
+
+			calHash := crypto.Keccak256(calRlp)
+			magicNumber := big.NewInt(0).SetBytes(calHash)
+			magicNumber.Mod(magicNumber, totalVote)
+			currentVote := big.NewInt(0)
+			for _, v := range providerLuckyData {
+				currentVote.Add(currentVote, v.VotingPower)
+				if magicNumber.Cmp(currentVote) < 0 {
+					tmpProvider.SetBytes(v.ProviderAddress.Bytes())
+					log.Debug("Check provider", "header Number", header.Number.String(), "provider", v.ProviderAddress, "votepower", v.VotingPower, "currentVote", currentVote)
+					break
+				}
+			}
+			if header.Provider.String() != tmpProvider.String() {
+				log.Error("invalid provider", "provider", header.Provider.String(), "expect provider", tmpProvider.String())
+				return errInvalidProvider
+			}
+
+		} else {
+			log.Debug("header not exist,skip verify", "header number", header.Number)
+		}
+	} else {
+		tmpProvider = common.Address{}
+		if header.Provider.String() != tmpProvider.String() {
+			log.Error("invalid provider", "provider", header.Provider.String(), "expect provider", tmpProvider.String())
+			return errInvalidProvider
+		}
+
+	}
+
+	if header.TeamRate != realTeamRate || header.ValidatorRate != realValRate {
+		return errInvalidDistributeRate
+	}
 	//if header.Difficulty.Cmp(diffInTurn) != 0 {
 	//		spoiledVal := snap.supposeValidator()
 	//		signedRecently := false
@@ -890,14 +1037,18 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 			panic(err)
 		}
 	}
+	if err := p.tryPunishValidator(chain, header, state); err != nil {
 
-	// punish validator if necessary
-	if header.Difficulty.Cmp(diffInTurn) != 0 {
-		if err := p.tryPunishValidator(chain, header, state); err != nil {
-
-			panic(err)
-		}
+		panic(err)
 	}
+	// punish validator if necessary
+	/*
+		if header.Difficulty.Cmp(diffInTurn) != 0 {
+			if err := p.tryPunishValidator(chain, header, state); err != nil {
+
+				panic(err)
+			}
+		}*/
 
 	// deposit block reward if any tx exists.
 	//if len(txs) > 0 {
@@ -1032,6 +1183,25 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 	//	return blk, receipts, nil
 }
 
+func getBlockReward(blockNumber uint64) *big.Int {
+	//yearBlockNumber := uint64(24*60*365*10)
+	yearBlockNumber := uint64(1440)
+	blockReward := new(big.Int).Mul(big.NewInt(61969993482), big.NewInt(1e8))
+	if blockNumber <= yearBlockNumber {
+		return blockReward
+	}
+	blockReward.Div(blockReward, big.NewInt(2))
+	if blockNumber <= yearBlockNumber*3 {
+		return blockReward
+	}
+	halvingTimes := int64((int64(blockNumber)-int64(yearBlockNumber)*3-1)/int64(yearBlockNumber*3)) + 1
+	//log.Info("halving time ", "halvingTimes", halvingTimes)
+	for i := 0; i < int(halvingTimes); i++ {
+		blockReward.Div(blockReward, big.NewInt(2))
+	}
+	return blockReward
+}
+
 func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	fee := state.GetBalance(consensus.SystemAddress)
 	/*
@@ -1040,24 +1210,74 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 		}
 	*/
 	// Miner will send tx to deposit block fees to contract, add to his balance first.
-	reward := new(big.Int).Add(fee, new(big.Int).Mul(big.NewInt(10), big.NewInt(params.Ether)))
-	state.AddBalance(header.Coinbase, reward)
+	//TODO get team address
+	MockTeamAddress := common.HexToAddress("0x2355534ff5F7B633A77824aAFd8879b2C527Ad78")
+
+	//TODO get distribute rate
+
+	if header.Number.Uint64() > common.BigOneDayUint {
+		yestBlockNumber := header.Number.Uint64() - common.BigOneDayUint
+		reward := getBlockReward(yestBlockNumber)
+		yestHeader := chain.GetHeaderByNumber(yestBlockNumber)
+		lastReward := new(big.Int).Div(reward, big.NewInt(2))
+		if yestHeader != nil {
+			teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(400)), big.NewInt(20000))
+			lastReward.Sub(lastReward, teamPartReward)
+			validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(1000)), big.NewInt(20000))
+			lastReward.Sub(lastReward, validatorPartReward)
+			if (yestHeader.Provider != common.Address{} && lastReward.Cmp(common.Big0) > 0) {
+				state.AddBalance(MockTeamAddress, teamPartReward)
+				state.AddBalance(yestHeader.Coinbase, validatorPartReward)
+				state.AddBalance(yestHeader.Provider, lastReward)
+			}
+			log.Info("distribute reward ", "teamPartReward", teamPartReward, "validatorPartReward", validatorPartReward, "lastReward", lastReward, "lastHeader.Provider", yestHeader.Provider, "lastHeader.Number", yestBlockNumber)
+			for i := 0; i < 100; i++ {
+				lastNumnber := header.Number.Uint64() - common.BigOneDayUint*uint64(i+2)
+				if lastNumnber > header.Number.Uint64() || (lastNumnber == 0) {
+					log.Info("max pay count", "count", i, "header.Number.Uint64()", header.Number.Uint64())
+					break
+				}
+				lastHeader := chain.GetHeaderByNumber(lastNumnber)
+
+				if lastHeader != nil {
+					reward = getBlockReward(lastNumnber)
+					lastReward = new(big.Int).Div(reward, big.NewInt(200))
+					teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(4)), big.NewInt(20000))
+					lastReward.Sub(lastReward, teamPartReward)
+					validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(10)), big.NewInt(20000))
+					lastReward.Sub(lastReward, validatorPartReward)
+					if (lastHeader.Provider != common.Address{} && lastReward.Cmp(common.Big0) > 0) {
+						state.AddBalance(MockTeamAddress, teamPartReward)
+						state.AddBalance(lastHeader.Coinbase, validatorPartReward)
+						state.AddBalance(lastHeader.Provider, lastReward)
+						//log.Info("distribute reward ","teamPartReward",teamPartReward,"validatorPartReward",validatorPartReward,"lastReward",lastReward,"lastHeader.Provider",lastHeader.Provider,"lastHeader.Number",lastNumnber)
+					}
+				} else {
+					log.Error("unexpect error block header not found.", "lastNumnber", lastNumnber)
+				}
+
+			}
+
+		}
+	}
+
+	state.AddBalance(common.Address{}, fee)
 	// reset fee
 	state.SetBalance(consensus.SystemAddress, common.Big0)
 
-	method := "distributeBlockReward"
-	data, err := p.abi[systemcontract.DposFactoryContractName].Pack(method)
-	if err != nil {
-		log.Error("Can't pack data for distributeBlockReward", "err", err)
-		return err
-	}
-
-	nonce := state.GetNonce(header.Coinbase)
-	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, reward, math.MaxUint64, new(big.Int), data, nil, true)
-
-	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
-		return err
-	}
+	//method := "distributeBlockReward"
+	//data, err := p.abi[systemcontract.DposFactoryContractName].Pack(method)
+	//if err != nil {
+	//	log.Error("Can't pack data for distributeBlockReward", "err", err)
+	//	return err
+	//}
+	//
+	//nonce := state.GetNonce(header.Coinbase)
+	//msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, reward, math.MaxUint64, new(big.Int), data, nil, true)
+	//
+	//if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -1082,6 +1302,11 @@ func (p *Dpos) tryPunishValidator(chain consensus.ChainHeaderReader, header *typ
 		if err := p.punishValidator(outTurnValidator, chain, header, state); err != nil {
 			return err
 		}
+	} else {
+		outTurnValidator = common.HexToAddress("0x0000000000000000000000000000000000000000")
+		if err := p.punishValidator(outTurnValidator, chain, header, state); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1094,13 +1319,14 @@ func (p *Dpos) doSomethingAtEpoch(chain consensus.ChainHeaderReader, header *typ
 	}
 
 	// update contract new validators if new set exists
-	if err := p.updateValidators(newSortedValidators, chain, header, state); err != nil {
-		return []common.Address{}, err
-	}
+	//if err := p.updateValidators(newSortedValidators, chain, header, state); err != nil {
+	//	return []common.Address{}, err
+	//}
 	//  decrease validator missed blocks counter at epoch
-	if err := p.decreaseMissedBlocksCounter(chain, header, state); err != nil {
-		return []common.Address{}, err
-	}
+	/*
+		if err := p.decreaseMissedBlocksCounter(chain, header, state); err != nil {
+			return []common.Address{}, err
+		}*/
 
 	return newSortedValidators, nil
 }
@@ -1119,17 +1345,24 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 	}
 
 	method := "initialize"
+
 	contracts := []struct {
 		addr    common.Address
 		packFun func() ([]byte, error)
 	}{
-		{systemcontract.PunishV1ContractAddr, func() ([]byte, error) { return p.abi[systemcontract.PunishV1ContractName].Pack(method) }},
-		{systemcontract.SysGovContractAddr, func() ([]byte, error) {
-			return p.abi[systemcontract.SysGovContractName].Pack(method, systemcontract.FactoryAdminAddr)
+
+		{systemcontract.ValidatorFactoryContractAddr, func() ([]byte, error) {
+
+			return p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, genesisValidators, systemcontract.ValidatorFactoryAdminAddr)
 		}},
-		{systemcontract.DposFactoryContractAddr, func() ([]byte, error) {
-			return p.abi[systemcontract.DposFactoryContractName].Pack(method, genesisValidators, systemcontract.FactoryAdminAddr)
-		}},
+		/*
+			{systemcontract.PunishV1ContractAddr, func() ([]byte, error) { return p.abi[systemcontract.PunishV1ContractName].Pack(method) }},
+			{systemcontract.SysGovContractAddr, func() ([]byte, error) {
+				return p.abi[systemcontract.SysGovContractName].Pack(method, systemcontract.FactoryAdminAddr)
+			}},
+			{systemcontract.DposFactoryContractAddr, func() ([]byte, error) {
+				return p.abi[systemcontract.DposFactoryContractName].Pack(method, genesisValidators, systemcontract.FactoryAdminAddr)
+			}},*/
 	}
 	i := 0
 	for _, contract := range contracts {
@@ -1163,10 +1396,10 @@ func (p *Dpos) getTopValidators(chain consensus.ChainHeaderReader, header *types
 		return []common.Address{}, err
 	}
 
-	method := "getTopValidators"
-	data, err := p.abi[systemcontract.DposFactoryContractName].Pack(method)
+	method := "getAllActiveValidatorAddr"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
 	if err != nil {
-		log.Error("Can't pack data for getTopValidators", "error", err)
+		log.Error("Can't pack data for getAllActiveValidatorAddr", "error", err)
 		return []common.Address{}, err
 	}
 
@@ -1179,7 +1412,7 @@ func (p *Dpos) getTopValidators(chain consensus.ChainHeaderReader, header *types
 	}
 
 	// unpack data
-	ret, err := p.abi[systemcontract.DposFactoryContractName].Unpack(method, result)
+	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
 	if err != nil {
 		return []common.Address{}, err
 	}
@@ -1194,6 +1427,186 @@ func (p *Dpos) getTopValidators(chain consensus.ChainHeaderReader, header *types
 	return validators, err
 }
 
+// call this to get distribute rate
+func (p *Dpos) getDistributeRate(chain consensus.ChainHeaderReader, header *types.Header) (uint64, uint64) {
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	if parent == nil {
+		return 400, 1000
+	}
+
+	statedb, err := p.stateFn(parent.Root)
+	if err != nil {
+		return 400, 1000
+	}
+
+	method := "team_percent"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
+	if err != nil {
+		log.Error("Can't pack data for team_percent", "error", err)
+		return 400, 1000
+	}
+
+	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return 400, 1000
+	}
+
+	// unpack data
+	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+	fmt.Println(ret)
+	if err != nil {
+		return 400, 1000
+	}
+	if len(ret) != 1 {
+		return 400, 1000
+	}
+	teamRate, ok := ret[0].(*big.Int)
+	if !ok {
+		return 400, 1000
+	}
+
+	method = "validator_percent"
+	data, err = p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
+	if err != nil {
+		log.Error("Can't pack data for validator_percent", "error", err)
+		return 400, 1000
+	}
+
+	msg = types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err = vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return 400, 1000
+	}
+
+	// unpack data
+	ret, err = p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+	fmt.Println(ret)
+	if err != nil {
+		return 400, 1000
+	}
+	if len(ret) != 1 {
+		return 400, 1000
+	}
+	valRate, ok := ret[0].(*big.Int)
+	if !ok {
+		return 400, 1000
+	}
+
+	return teamRate.Uint64(), valRate.Uint64()
+}
+
+// call this at every block to get provider Info.
+func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.Header) ([]VoteInfo, error) {
+
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	if parent == nil {
+		return []VoteInfo{}, consensus.ErrUnknownAncestor
+	}
+	statedb, err := p.stateFn(parent.Root)
+	if err != nil {
+		return []VoteInfo{}, err
+	}
+	if ProviderFactoryAddr == (common.Address{}) {
+		method := "providerFactory"
+		data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
+		if err != nil {
+			log.Error("Can't pack data for providerFactory", "error", err)
+			return []VoteInfo{}, err
+		}
+
+		msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+		result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+		if err != nil {
+			return []VoteInfo{}, err
+		}
+		ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+		if err != nil {
+			return []VoteInfo{}, err
+		}
+		ProviderFactoryAddr = ret[0].(common.Address)
+		fmt.Println(ProviderFactoryAddr)
+
+	}
+	if ProviderFactoryAddr == (common.Address{}) {
+		return []VoteInfo{}, nil
+	}
+	method := "getProviderInfo"
+	data, err := p.abi[systemcontract.ProviderFactoryContractName].Pack(method, big.NewInt(0), big.NewInt(0))
+	if err != nil {
+		log.Error("Can't pack data for getAllActiveValidatorAddr", "error", err)
+		return []VoteInfo{}, err
+	}
+
+	msg := types.NewMessage(header.Coinbase, &ProviderFactoryAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return []VoteInfo{}, err
+	}
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			//fmt.Println("panic error",r)
+			err = fmt.Errorf("recover from panic: %v", r)
+
+		}
+
+	}()
+
+	// unpack data
+	ret, err := p.abi[systemcontract.ProviderFactoryContractName].Unpack(method, result)
+	if err != nil {
+		return []VoteInfo{}, err
+	}
+	if len(ret) != 1 {
+		return []VoteInfo{}, errors.New("Invalid params length")
+	}
+	fmt.Println(ret[0])
+	providers := *abi.ConvertType(ret[0], new([]ProviderInfos)).(*[]ProviderInfos)
+	fmt.Println(providers)
+	//fmt.Println(ret)
+	//providers, ok := ret[0].([]ProviderInfos)
+	//if !ok {
+	//	return []VoteInfo{}, errors.New("Invalid provider format")
+	//}
+	rets := make([]VoteInfo, 0, 0)
+
+	for _, oneProvider := range providers {
+		if oneProvider.Info.State == 2 {
+			continue
+		}
+		if oneProvider.MarginAmount.Cmp(StakeThreshold) < 0 {
+			continue
+		}
+
+		cpuDiff := new(big.Int).Sub(oneProvider.Info.Total.CpuCount, oneProvider.Info.Lock.CpuCount)
+		storageDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.StorageCount, oneProvider.Info.Lock.StorageCount), big.NewInt(1073741824))
+		memoryDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Lock.MemoryCount), big.NewInt(1048576))
+		tmpMaxStorage := new(big.Int).Mul(MaxStorage, cpuDiff)
+		if storageDiff.Cmp(tmpMaxStorage) > 0 {
+			storageDiff.Set(tmpMaxStorage)
+		}
+		tmpMaxMemory := new(big.Int).Mul(MaxMemory, cpuDiff)
+		if memoryDiff.Cmp(tmpMaxMemory) > 0 {
+			memoryDiff.Set(tmpMaxMemory)
+		}
+		tmpPorValue := new(big.Int).Mul(new(big.Int).Add(cpuDiff, new(big.Int).Add(storageDiff, memoryDiff)), big.NewInt(1e16))
+		luckValue := new(big.Int).Add(new(big.Int).Mul(oneProvider.MarginAmount, LuckyRate), new(big.Int).Mul(tmpPorValue, LuckyPorRate))
+		tmpVoteInfo := VoteInfo{VotingPower: luckValue, ProviderAddress: oneProvider.Info.Owner}
+		rets = append(rets, tmpVoteInfo)
+	}
+
+	return rets, err
+}
+
+/*
 func (p *Dpos) updateValidators(vals []common.Address, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	// method
 	method := "updateActiveValidatorSet"
@@ -1213,11 +1626,11 @@ func (p *Dpos) updateValidators(vals []common.Address, chain consensus.ChainHead
 
 	return nil
 }
-
+*/
 func (p *Dpos) punishValidator(val common.Address, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	// method
-	method := "punish"
-	data, err := p.abi[systemcontract.PunishV1ContractName].Pack(method, val)
+	method := "tryPunish"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, val)
 	if err != nil {
 		log.Error("Can't pack data for punish", "error", err)
 		return err
@@ -1234,6 +1647,7 @@ func (p *Dpos) punishValidator(val common.Address, chain consensus.ChainHeaderRe
 	return nil
 }
 
+/*
 func (p *Dpos) decreaseMissedBlocksCounter(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	// method
 	method := "decreaseMissedBlocksCounter"
@@ -1253,7 +1667,7 @@ func (p *Dpos) decreaseMissedBlocksCounter(chain consensus.ChainHeaderReader, he
 
 	return nil
 }
-
+*/
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
 func (p *Dpos) Authorize(val common.Address, signFn SignerFn, signTxFn SignerTxFn) bool {
@@ -1463,23 +1877,25 @@ func (p *Dpos) PreHandle(chain consensus.ChainHeaderReader, header *types.Header
 
 // IsSysTransaction checks whether a specific transaction is a system transaction.
 func (p *Dpos) IsSysTransaction(tx *types.Transaction, header *types.Header) (bool, error) {
-	if tx.To() == nil {
-		return false, nil
-	}
-
-	sender, err := types.Sender(p.signer, tx)
-	if err != nil {
-		return false, errors.New("UnAuthorized transaction")
-	}
-	to := tx.To()
-	if sender == header.Coinbase && *to == systemcontract.SysGovToAddr && tx.GasPrice().Sign() == 0 {
-		return true, nil
-	}
-	// Make sure the miner can NOT call the system contract through a normal transaction.
-	if sender == header.Coinbase && *to == systemcontract.SysGovContractAddr {
-		return true, nil
-	}
 	return false, nil
+	/*
+		if tx.To() == nil {
+			return false, nil
+		}
+
+		sender, err := types.Sender(p.signer, tx)
+		if err != nil {
+			return false, errors.New("UnAuthorized transaction")
+		}
+		to := tx.To()
+		if sender == header.Coinbase && *to == systemcontract.SysGovToAddr && tx.GasPrice().Sign() == 0 {
+			return true, nil
+		}
+		// Make sure the miner can NOT call the system contract through a normal transaction.
+		if sender == header.Coinbase && *to == systemcontract.SysGovContractAddr {
+			return true, nil
+		}
+		return false, nil*/
 }
 
 // CanCreate determines where a given address can create a new contract.

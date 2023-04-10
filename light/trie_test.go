@@ -22,14 +22,14 @@ import (
 	"fmt"
 	"testing"
 
+	"PureChain/consensus/ethash"
+	"PureChain/core"
+	"PureChain/core/rawdb"
+	"PureChain/core/state"
+	"PureChain/core/vm"
+	"PureChain/params"
+	"PureChain/trie"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ethereum/go-ethereum/consensus/ethash"
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/trie"
 )
 
 func TestNodeIterator(t *testing.T) {

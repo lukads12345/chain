@@ -29,12 +29,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/mclock"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/p2p/discover/v5wire"
-	"github.com/ethereum/go-ethereum/p2p/enode"
-	"github.com/ethereum/go-ethereum/p2p/enr"
-	"github.com/ethereum/go-ethereum/p2p/netutil"
+	"PureChain/common/mclock"
+	"PureChain/log"
+	"PureChain/p2p/discover/v5wire"
+	"PureChain/p2p/enode"
+	"PureChain/p2p/enr"
+	"PureChain/p2p/netutil"
 )
 
 const (

@@ -21,10 +21,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/gopool"
-	"github.com/ethereum/go-ethereum/core/forkid"
-	"github.com/ethereum/go-ethereum/p2p"
+	"PureChain/common"
+	"PureChain/common/gopool"
+	"PureChain/core/forkid"
+	"PureChain/p2p"
 )
 
 const (
