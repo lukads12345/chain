@@ -273,6 +273,15 @@ func (s *StateDB) GetBalance(addr common.Address) *big.Int {
 	return common.Big0
 }
 
+// GetLockBalance retrieves the balance from the given address or 0 if object not found
+func (s *StateDB) GetLockBalance(addr common.Address) *big.Int {
+	stateObject := s.getStateObject(addr)
+	if stateObject != nil {
+		return stateObject.LockBalance()
+	}
+	return common.Big0
+}
+
 func (s *StateDB) GetNonce(addr common.Address) uint64 {
 	stateObject := s.getStateObject(addr)
 	if stateObject != nil {
@@ -413,10 +422,33 @@ func (s *StateDB) SubBalance(addr common.Address, amount *big.Int) {
 	}
 }
 
+// AddLockBalance adds amount to the account associated with addr.
+func (s *StateDB) AddLockBalance(addr common.Address, amount *big.Int) {
+	stateObject := s.GetOrNewStateObject(addr)
+	if stateObject != nil {
+
+		stateObject.AddLockBalance(amount)
+	}
+}
+
+// SubLockBalance subtracts amount from the account associated with addr.
+func (s *StateDB) SubLockBalance(addr common.Address, amount *big.Int) {
+	stateObject := s.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SubLockBalance(amount)
+	}
+}
+
 func (s *StateDB) SetBalance(addr common.Address, amount *big.Int) {
 	stateObject := s.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetBalance(amount)
+	}
+}
+func (s *StateDB) SetLockBalance(addr common.Address, amount *big.Int) {
+	stateObject := s.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SetLockBalance(amount)
 	}
 }
 
@@ -626,10 +658,11 @@ func (s *StateDB) getDeletedStateObject(addr common.Address) *StateObject {
 				return nil
 			}
 			data = &Account{
-				Nonce:    acc.Nonce,
-				Balance:  acc.Balance,
-				CodeHash: acc.CodeHash,
-				Root:     common.BytesToHash(acc.Root),
+				Nonce:       acc.Nonce,
+				Balance:     acc.Balance,
+				LockBalance: acc.LockBalance,
+				CodeHash:    acc.CodeHash,
+				Root:        common.BytesToHash(acc.Root),
 			}
 			if len(data.CodeHash) == 0 {
 				data.CodeHash = emptyCodeHash
@@ -992,7 +1025,8 @@ func (s *StateDB) IntermediateRoot(deleteEmptyObjects bool) common.Hash {
 				// at transaction boundary level to ensure we capture state clearing.
 				if s.snap != nil && !obj.deleted {
 					s.snapMux.Lock()
-					s.snapAccounts[obj.addrHash] = snapshot.SlimAccountRLP(obj.data.Nonce, obj.data.Balance, obj.data.Root, obj.data.CodeHash)
+
+					s.snapAccounts[obj.addrHash] = snapshot.SlimAccountRLP(obj.data.Nonce, obj.data.Balance, obj.data.LockBalance, obj.data.Root, obj.data.CodeHash)
 					s.snapMux.Unlock()
 				}
 				data, err := rlp.EncodeToBytes(obj)

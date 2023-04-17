@@ -135,6 +135,8 @@ var (
 
 	// errInvalidProvider is returned if a block calculate illegal provider.
 	errInvalidProvider = errors.New("illegal provider")
+	// errInvalidTeamAddress is returned if a block calculate illegal teamAddress.
+	errInvalidTeamAddr = errors.New("illegal team address")
 
 	// errInvalidDistributeRate is returned if a block set illegal distribute rate.
 	errInvalidDistributeRate = errors.New("illegal distribute rate")
@@ -732,6 +734,7 @@ func (p *Dpos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 
 	realTeamRate, realValRate := p.getDistributeRate(chain, header)
+	fmt.Println("getDistributeRate", realTeamRate, realValRate)
 	totalVote := big.NewInt(0)
 	for _, k := range providerDetailData {
 		totalVote.Add(totalVote, k.VotingPower)
@@ -767,6 +770,7 @@ func (p *Dpos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 	header.TeamRate = realTeamRate
 	header.ValidatorRate = realValRate
+	header.TeamAddress, _ = p.getTeamAddress(chain, header)
 
 	// Set the correct difficulty
 	header.Difficulty = CalcDifficulty(snap, p.val)
@@ -936,7 +940,13 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	//TODO: 获取质押合约的参数
 
 	realTeamRate, realValRate := p.getDistributeRate(chain, header)
-
+	tmpTeamAddress, err := p.getTeamAddress(chain, header)
+	if err == nil {
+		if tmpTeamAddress.String() != header.TeamAddress.String() {
+			log.Error("invalid team address", "team", header.TeamAddress.String(), "expect team address", tmpTeamAddress.String())
+			return errInvalidTeamAddr
+		}
+	}
 	providerLuckyData, err := p.getProviderInfo(chain, header)
 	if err != nil {
 		log.Error("get provider info failed", "error", err.Error())
@@ -1210,25 +1220,30 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 		}
 	*/
 	// Miner will send tx to deposit block fees to contract, add to his balance first.
-	//TODO get team address
-	MockTeamAddress := common.HexToAddress("0x2355534ff5F7B633A77824aAFd8879b2C527Ad78")
-
-	//TODO get distribute rate
 
 	if header.Number.Uint64() > common.BigOneDayUint {
 		yestBlockNumber := header.Number.Uint64() - common.BigOneDayUint
 		reward := getBlockReward(yestBlockNumber)
 		yestHeader := chain.GetHeaderByNumber(yestBlockNumber)
+
 		lastReward := new(big.Int).Div(reward, big.NewInt(2))
 		if yestHeader != nil {
-			teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(400)), big.NewInt(20000))
+			TeamAddress := yestHeader.TeamAddress
+			teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate)), big.NewInt(20000))
 			lastReward.Sub(lastReward, teamPartReward)
-			validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(1000)), big.NewInt(20000))
+
+			validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate)), big.NewInt(20000))
 			lastReward.Sub(lastReward, validatorPartReward)
-			if (yestHeader.Provider != common.Address{} && lastReward.Cmp(common.Big0) > 0) {
-				state.AddBalance(MockTeamAddress, teamPartReward)
+			if lastReward.Cmp(common.Big0) > 0 {
+				if (yestHeader.Provider != common.Address{}) {
+					state.AddBalance(yestHeader.Provider, lastReward)
+					state.AddLockBalance(yestHeader.Provider, teamPartReward)
+				}
+				state.AddBalance(TeamAddress, teamPartReward)
+				state.AddLockBalance(TeamAddress, teamPartReward)
 				state.AddBalance(yestHeader.Coinbase, validatorPartReward)
-				state.AddBalance(yestHeader.Provider, lastReward)
+				state.AddLockBalance(yestHeader.Coinbase, validatorPartReward)
+
 			}
 			log.Info("distribute reward ", "teamPartReward", teamPartReward, "validatorPartReward", validatorPartReward, "lastReward", lastReward, "lastHeader.Provider", yestHeader.Provider, "lastHeader.Number", yestBlockNumber)
 			for i := 0; i < 100; i++ {
@@ -1242,14 +1257,34 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 				if lastHeader != nil {
 					reward = getBlockReward(lastNumnber)
 					lastReward = new(big.Int).Div(reward, big.NewInt(200))
-					teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(4)), big.NewInt(20000))
+					teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate/100)), big.NewInt(20000))
 					lastReward.Sub(lastReward, teamPartReward)
-					validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, big.NewInt(10)), big.NewInt(20000))
+					validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate/100)), big.NewInt(20000))
 					lastReward.Sub(lastReward, validatorPartReward)
-					if (lastHeader.Provider != common.Address{} && lastReward.Cmp(common.Big0) > 0) {
-						state.AddBalance(MockTeamAddress, teamPartReward)
+					if lastReward.Cmp(common.Big0) > 0 {
+						if (lastHeader.Provider != common.Address{}) {
+							state.AddBalance(lastHeader.Provider, lastReward)
+							if state.GetLockBalance(lastHeader.Provider).Cmp(lastReward) > 0 {
+								state.SubLockBalance(lastHeader.Provider, lastReward)
+							} else {
+								state.SetLockBalance(lastHeader.Provider, common.Big0)
+							}
+
+						}
+						state.AddBalance(TeamAddress, teamPartReward)
+						if state.GetLockBalance(TeamAddress).Cmp(teamPartReward) > 0 {
+							state.SubLockBalance(TeamAddress, teamPartReward)
+						} else {
+							state.SetLockBalance(TeamAddress, common.Big0)
+						}
+
 						state.AddBalance(lastHeader.Coinbase, validatorPartReward)
-						state.AddBalance(lastHeader.Provider, lastReward)
+						if state.GetLockBalance(lastHeader.Coinbase).Cmp(validatorPartReward) > 0 {
+							state.SubLockBalance(lastHeader.Coinbase, validatorPartReward)
+						} else {
+							state.SetLockBalance(lastHeader.Coinbase, common.Big0)
+						}
+
 						//log.Info("distribute reward ","teamPartReward",teamPartReward,"validatorPartReward",validatorPartReward,"lastReward",lastReward,"lastHeader.Provider",lastHeader.Provider,"lastHeader.Number",lastNumnber)
 					}
 				} else {
@@ -1456,7 +1491,7 @@ func (p *Dpos) getDistributeRate(chain consensus.ChainHeaderReader, header *type
 
 	// unpack data
 	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
-	fmt.Println(ret)
+
 	if err != nil {
 		return 400, 1000
 	}
@@ -1485,7 +1520,7 @@ func (p *Dpos) getDistributeRate(chain consensus.ChainHeaderReader, header *type
 
 	// unpack data
 	ret, err = p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
-	fmt.Println(ret)
+
 	if err != nil {
 		return 400, 1000
 	}
@@ -1498,6 +1533,49 @@ func (p *Dpos) getDistributeRate(chain consensus.ChainHeaderReader, header *type
 	}
 
 	return teamRate.Uint64(), valRate.Uint64()
+}
+
+func (p *Dpos) getTeamAddress(chain consensus.ChainHeaderReader, header *types.Header) (common.Address, error) {
+
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	if parent == nil {
+		return common.Address{}, consensus.ErrUnknownAncestor
+	}
+
+	statedb, err := p.stateFn(parent.Root)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	method := "team_address"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
+	if err != nil {
+		log.Error("Can't pack data for team_address", "error", err)
+		return common.Address{}, err
+	}
+
+	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	// unpack data
+	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+
+	if err != nil {
+		return common.Address{}, err
+	}
+	if len(ret) != 1 {
+		return common.Address{}, err
+	}
+	teamAddress, ok := ret[0].(common.Address)
+	if !ok {
+		return common.Address{}, err
+	}
+	return teamAddress, nil
 }
 
 // call this at every block to get provider Info.
@@ -1529,7 +1607,6 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 			return []VoteInfo{}, err
 		}
 		ProviderFactoryAddr = ret[0].(common.Address)
-		fmt.Println(ProviderFactoryAddr)
 
 	}
 	if ProviderFactoryAddr == (common.Address{}) {
@@ -1568,9 +1645,9 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	if len(ret) != 1 {
 		return []VoteInfo{}, errors.New("Invalid params length")
 	}
-	fmt.Println(ret[0])
+
 	providers := *abi.ConvertType(ret[0], new([]ProviderInfos)).(*[]ProviderInfos)
-	fmt.Println(providers)
+
 	//fmt.Println(ret)
 	//providers, ok := ret[0].([]ProviderInfos)
 	//if !ok {

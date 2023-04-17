@@ -97,22 +97,26 @@ type StateObject struct {
 
 // empty returns whether the account is considered empty.
 func (s *StateObject) empty() bool {
-	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && bytes.Equal(s.data.CodeHash, emptyCodeHash)
+	return s.data.Nonce == 0 && s.data.Balance.Sign() == 0 && s.data.LockBalance.Sign() == 0 && bytes.Equal(s.data.CodeHash, emptyCodeHash)
 }
 
 // Account is the Ethereum consensus representation of accounts.
 // These objects are stored in the main account trie.
 type Account struct {
-	Nonce    uint64
-	Balance  *big.Int
-	Root     common.Hash // merkle root of the storage trie
-	CodeHash []byte
+	Nonce       uint64
+	Balance     *big.Int
+	LockBalance *big.Int
+	Root        common.Hash // merkle root of the storage trie
+	CodeHash    []byte
 }
 
 // newObject creates a state object.
 func newObject(db *StateDB, address common.Address, data Account) *StateObject {
 	if data.Balance == nil {
 		data.Balance = new(big.Int)
+	}
+	if data.LockBalance == nil {
+		data.LockBalance = new(big.Int)
 	}
 	if data.CodeHash == nil {
 		data.CodeHash = emptyCodeHash
@@ -448,6 +452,20 @@ func (s *StateObject) AddBalance(amount *big.Int) {
 	s.SetBalance(new(big.Int).Add(s.Balance(), amount))
 }
 
+// AddLockBalance adds amount to s's lockBalance.
+// It is used to add funds to the destination account of a transfer.
+func (s *StateObject) AddLockBalance(amount *big.Int) {
+	// EIP161: We must check emptiness for the objects such that the account
+	// clearing (0,0,0 objects) can take effect.
+	if amount.Sign() == 0 {
+		if s.empty() {
+			s.touch()
+		}
+		return
+	}
+	s.SetLockBalance(new(big.Int).Add(s.LockBalance(), amount))
+}
+
 // SubBalance removes amount from s's balance.
 // It is used to remove funds from the origin account of a transfer.
 func (s *StateObject) SubBalance(amount *big.Int) {
@@ -455,6 +473,15 @@ func (s *StateObject) SubBalance(amount *big.Int) {
 		return
 	}
 	s.SetBalance(new(big.Int).Sub(s.Balance(), amount))
+}
+
+// SubLockBalance removes amount from s's lockBalance.
+// It is used to remove funds from the origin account of a transfer.
+func (s *StateObject) SubLockBalance(amount *big.Int) {
+	if amount.Sign() == 0 {
+		return
+	}
+	s.SetLockBalance(new(big.Int).Sub(s.LockBalance(), amount))
 }
 
 func (s *StateObject) SetBalance(amount *big.Int) {
@@ -467,6 +494,18 @@ func (s *StateObject) SetBalance(amount *big.Int) {
 
 func (s *StateObject) setBalance(amount *big.Int) {
 	s.data.Balance = amount
+}
+
+func (s *StateObject) SetLockBalance(amount *big.Int) {
+	s.db.journal.append(lockBalanceChange{
+		account: &s.address,
+		prev:    new(big.Int).Set(s.data.LockBalance),
+	})
+	s.setLockBalance(amount)
+}
+
+func (s *StateObject) setLockBalance(amount *big.Int) {
+	s.data.LockBalance = amount
 }
 
 // Return the gas back to the origin. Used by the Virtual machine or Closures
@@ -563,6 +602,9 @@ func (s *StateObject) CodeHash() []byte {
 
 func (s *StateObject) Balance() *big.Int {
 	return s.data.Balance
+}
+func (s *StateObject) LockBalance() *big.Int {
+	return s.data.LockBalance
 }
 
 func (s *StateObject) Nonce() uint64 {

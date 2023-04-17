@@ -105,6 +105,10 @@ type (
 		account *common.Address
 		prev    *big.Int
 	}
+	lockBalanceChange struct {
+		account *common.Address
+		prev    *big.Int
+	}
 	nonceChange struct {
 		account *common.Address
 		prev    uint64
@@ -193,6 +197,14 @@ func (ch balanceChange) revert(s *StateDB) {
 }
 
 func (ch balanceChange) dirtied() *common.Address {
+	return ch.account
+}
+
+func (ch lockBalanceChange) revert(s *StateDB) {
+	s.getStateObject(*ch.account).setLockBalance(ch.prev)
+}
+
+func (ch lockBalanceChange) dirtied() *common.Address {
 	return ch.account
 }
 

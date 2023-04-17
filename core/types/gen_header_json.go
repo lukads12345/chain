@@ -3,12 +3,11 @@
 package types
 
 import (
+	"PureChain/common"
+	"PureChain/common/hexutil"
 	"encoding/json"
 	"errors"
 	"math/big"
-
-	"PureChain/common"
-	"PureChain/common/hexutil"
 )
 
 var _ = (*headerMarshaling)(nil)
@@ -31,6 +30,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 		Extra         hexutil.Bytes  `json:"extraData"        gencodec:"required"`
 		MixDigest     common.Hash    `json:"mixHash"`
 		Provider      common.Address `json:"provider"         gencodec:"required"`
+		TeamAddress   common.Address `json:"team_address"     gencodec:"required"`
 		ValidatorRate hexutil.Uint64 `json:"validator_rate"     gencodec:"required"`
 		TeamRate      hexutil.Uint64 `json:"team_rate"          gencodec:"required"`
 		Nonce         BlockNonce     `json:"nonce"`
@@ -52,6 +52,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	enc.Extra = h.Extra
 	enc.MixDigest = h.MixDigest
 	enc.Provider = h.Provider
+	enc.TeamAddress = h.TeamAddress
 	enc.ValidatorRate = hexutil.Uint64(h.ValidatorRate)
 	enc.TeamRate = hexutil.Uint64(h.TeamRate)
 	enc.Nonce = h.Nonce
@@ -77,6 +78,7 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		Extra         *hexutil.Bytes  `json:"extraData"        gencodec:"required"`
 		MixDigest     *common.Hash    `json:"mixHash"`
 		Provider      *common.Address `json:"provider"         gencodec:"required"`
+		TeamAddress   *common.Address `json:"team_address"     gencodec:"required"`
 		ValidatorRate *hexutil.Uint64 `json:"validator_rate"     gencodec:"required"`
 		TeamRate      *hexutil.Uint64 `json:"team_rate"          gencodec:"required"`
 		Nonce         *BlockNonce     `json:"nonce"`
@@ -144,6 +146,10 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'provider' for Header")
 	}
 	h.Provider = *dec.Provider
+	if dec.TeamAddress == nil {
+		return errors.New("missing required field 'team_address' for Header")
+	}
+	h.TeamAddress = *dec.TeamAddress
 	if dec.ValidatorRate == nil {
 		return errors.New("missing required field 'validator_rate' for Header")
 	}
