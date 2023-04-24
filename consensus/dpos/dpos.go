@@ -70,6 +70,8 @@ const (
 	doubleDistributeRound = 200                // Double Number of distribute round
 	blockDistributeRewrad = 61969993482        // one block origin reward
 	yearBlockCount        = 24 * 60 * 365 * 10 // one year generate block count
+	OneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
+	oneGDiv1000           = 1048576            // 1024*1024*1024/1000
 )
 
 type blacklistDirection uint
@@ -1670,8 +1672,8 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 		}
 
 		cpuDiff := new(big.Int).Sub(oneProvider.Info.Total.CpuCount, oneProvider.Info.Lock.CpuCount)
-		storageDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.StorageCount, oneProvider.Info.Lock.StorageCount), big.NewInt(1073741824))
-		memoryDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Lock.MemoryCount), big.NewInt(1048576))
+		storageDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.StorageCount, oneProvider.Info.Lock.StorageCount), big.NewInt(OneTDiv1000))
+		memoryDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Lock.MemoryCount), big.NewInt(oneGDiv1000))
 		tmpMaxStorage := new(big.Int).Mul(MaxStorage, cpuDiff)
 		if storageDiff.Cmp(tmpMaxStorage) > 0 {
 			storageDiff.Set(tmpMaxStorage)
