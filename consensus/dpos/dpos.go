@@ -62,8 +62,14 @@ const (
 	wiggleTime           = uint64(1) // second, Random delay (per signer) to allow concurrent signers
 	initialBackOffTime   = uint64(1) // second
 
-	systemRewardPercent = 4  // it means 1/2^4 = 1/16 percentage of gas fee incoming will be distributed to system
-	inmemoryBlacklist   = 21 // Number of recent blacklist snapshots to keep in memory
+	systemRewardPercent   = 4                  // it means 1/2^4 = 1/16 percentage of gas fee incoming will be distributed to system
+	inmemoryBlacklist     = 21                 // Number of recent blacklist snapshots to keep in memory
+	allPercent            = 10000              // Number of all distribute percent
+	doubleAllPercent      = 20000              // Number of all distribute percent
+	distributeRound       = 100                // Number of distribute round
+	doubleDistributeRound = 200                // Double Number of distribute round
+	blockDistributeRewrad = 61969993482        // one block origin reward
+	yearBlockCount        = 24 * 60 * 365 * 10 // one year generate block count
 )
 
 type blacklistDirection uint
@@ -1194,9 +1200,9 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 }
 
 func getBlockReward(blockNumber uint64) *big.Int {
-	//yearBlockNumber := uint64(24*60*365*10)
-	yearBlockNumber := uint64(1440)
-	blockReward := new(big.Int).Mul(big.NewInt(61969993482), big.NewInt(1e8))
+	yearBlockNumber := uint64(yearBlockCount)
+	//yearBlockNumber := uint64(1440)
+	blockReward := new(big.Int).Mul(big.NewInt(blockDistributeRewrad), big.NewInt(1e8))
 	if blockNumber <= yearBlockNumber {
 		return blockReward
 	}
@@ -1229,10 +1235,10 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 		lastReward := new(big.Int).Div(reward, big.NewInt(2))
 		if yestHeader != nil {
 			TeamAddress := yestHeader.TeamAddress
-			teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate)), big.NewInt(20000))
+			teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate)), big.NewInt(doubleAllPercent))
 			lastReward.Sub(lastReward, teamPartReward)
 
-			validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate)), big.NewInt(20000))
+			validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate)), big.NewInt(doubleAllPercent))
 			lastReward.Sub(lastReward, validatorPartReward)
 			if lastReward.Cmp(common.Big0) > 0 {
 				if (yestHeader.Provider != common.Address{}) {
@@ -1246,20 +1252,20 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 
 			}
 			log.Info("distribute reward ", "teamPartReward", teamPartReward, "validatorPartReward", validatorPartReward, "lastReward", lastReward, "lastHeader.Provider", yestHeader.Provider, "lastHeader.Number", yestBlockNumber)
-			for i := 0; i < 100; i++ {
-				lastNumnber := header.Number.Uint64() - common.BigOneDayUint*uint64(i+2)
-				if lastNumnber > header.Number.Uint64() || (lastNumnber == 0) {
+			for i := 0; i < distributeRound; i++ {
+				lastNumber := header.Number.Uint64() - common.BigOneDayUint*uint64(i+2)
+				if lastNumber > header.Number.Uint64() || (lastNumber == 0) {
 					log.Info("max pay count", "count", i, "header.Number.Uint64()", header.Number.Uint64())
 					break
 				}
-				lastHeader := chain.GetHeaderByNumber(lastNumnber)
+				lastHeader := chain.GetHeaderByNumber(lastNumber)
 
 				if lastHeader != nil {
-					reward = getBlockReward(lastNumnber)
-					lastReward = new(big.Int).Div(reward, big.NewInt(200))
-					teamPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate/100)), big.NewInt(20000))
+					reward = getBlockReward(lastNumber)
+					lastReward = new(big.Int).Div(reward, big.NewInt(doubleDistributeRound))
+					teamPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
 					lastReward.Sub(lastReward, teamPartReward)
-					validatorPartReward := new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate/100)), big.NewInt(20000))
+					validatorPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
 					lastReward.Sub(lastReward, validatorPartReward)
 					if lastReward.Cmp(common.Big0) > 0 {
 						if (lastHeader.Provider != common.Address{}) {
@@ -1285,10 +1291,10 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 							state.SetLockBalance(lastHeader.Coinbase, common.Big0)
 						}
 
-						//log.Info("distribute reward ","teamPartReward",teamPartReward,"validatorPartReward",validatorPartReward,"lastReward",lastReward,"lastHeader.Provider",lastHeader.Provider,"lastHeader.Number",lastNumnber)
+						//log.Info("distribute reward ","teamPartReward",teamPartReward,"validatorPartReward",validatorPartReward,"lastReward",lastReward,"lastHeader.Provider",lastHeader.Provider,"lastHeader.Number",lastNumber)
 					}
 				} else {
-					log.Error("unexpect error block header not found.", "lastNumnber", lastNumnber)
+					log.Error("unexpect error block header not found.", "lastNumber", lastNumber)
 				}
 
 			}
