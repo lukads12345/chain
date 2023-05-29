@@ -49,6 +49,11 @@ func has0xPrefix(str string) bool {
 	return len(str) >= 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X')
 }
 
+// has0xPrefix validates str begins with '0x' or '0X'.
+func hasU4Prefix(str string) bool {
+	return len(str) >= 2 && str[0] == 'U' && (str[1] == '4')
+}
+
 // isHexCharacter returns bool of c being a valid hexadecimal.
 func isHexCharacter(c byte) bool {
 	return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F')

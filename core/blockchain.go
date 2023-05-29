@@ -1890,7 +1890,13 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 
 		//Process block using the parent state as reference point
 		substart := time.Now()
+
 		receipts, logs, usedGas, err := bc.processor.Process(block, statedb, bc.vmConfig)
+		fmt.Println(block.Number(), usedGas, block.Transactions().Len())
+		if block.Transactions().Len() > 0 {
+			tttt, _ := block.Transactions()[0].MarshalJSON()
+			fmt.Println(usedGas, string(tttt))
+		}
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			return it.index, err

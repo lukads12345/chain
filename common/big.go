@@ -27,6 +27,7 @@ var (
 	Big32         = big.NewInt(32)
 	Big256        = big.NewInt(256)
 	Big257        = big.NewInt(257)
+	Big1000       = big.NewInt(1000)
 	BigOneDay     = big.NewInt(14400)
 	BigOneDayUint = BigOneDay.Uint64()
 )

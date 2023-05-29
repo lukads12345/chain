@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"container/heap"
 	"errors"
+	"fmt"
 	"io"
 	"math/big"
 	"sync/atomic"
@@ -437,6 +438,8 @@ func NewTransactionsByPriceAndNonce(signer Signer, txs map[common.Address]Transa
 	for from, accTxs := range txs {
 		// Ensure the sender address is from the signer
 		if acc, _ := Sender(signer, accTxs[0]); acc != from {
+
+			fmt.Println("sender remove", acc, from)
 			delete(txs, from)
 			continue
 		}

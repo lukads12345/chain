@@ -59,16 +59,16 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error) {
 	var (
 		receipts = make([]*types.Receipt, 0)
-		usedGas = new(uint64)
-		header  = block.Header()
-		allLogs []*types.Log
-		gp      = new(GasPool).AddGas(block.GasLimit())
+		usedGas  = new(uint64)
+		header   = block.Header()
+		allLogs  []*types.Log
+		gp       = new(GasPool).AddGas(block.GasLimit())
 	)
 	//var receipts = make([]*types.Receipt, 0)
 	// Mutate the block and state according to any hard-fork specs
-//	if p.config.DAOForkSupport && p.config.DAOForkBlock != nil && p.config.DAOForkBlock.Cmp(block.Number()) == 0 {
+	//	if p.config.DAOForkSupport && p.config.DAOForkBlock != nil && p.config.DAOForkBlock.Cmp(block.Number()) == 0 {
 	//	misc.ApplyDAOHardFork(statedb)
-//	}
+	//	}
 	// Handle upgrade build-in system contract code
 	//systemcontracts.UpgradeBuildInSystemContract(p.config, block.Number(), statedb)
 
@@ -95,16 +95,18 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 				continue
 			}
 			err := posa.ValidateTx(tx, header, statedb)
-		
+
 			if err != nil {
 				return nil, nil, 0, err
 			}
 		}
 
 		msg, err := tx.AsMessage(signer)
-		
+
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
+		fmt.Println("usedGas1------>", usedGas)
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
+		fmt.Println("usedGas2------>", usedGas)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}

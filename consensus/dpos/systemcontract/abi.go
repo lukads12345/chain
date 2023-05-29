@@ -49,93 +49,6 @@ const PunishInteractiveABI = `
 ]
 `
 
-const SysGovInteractiveABI = `
-[
-    {
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			}
-		],
-		"name": "finishProposalById",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint32",
-				"name": "index",
-				"type": "uint32"
-			}
-		],
-		"name": "getPassedProposalByIndex",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "id",
-				"type": "uint256"
-			},
-			{
-        		"internalType": "uint256",
-        		"name": "action",
-        		"type": "uint256"
-        	},
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bytes",
-				"name": "data",
-				"type": "bytes"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getPassedProposalCount",
-		"outputs": [
-			{
-				"internalType": "uint32",
-				"name": "",
-				"type": "uint32"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_admin",
-				"type": "address"
-			}
-		],
-		"name": "initialize",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	}
-]`
-
 const AddrListInteractiveABI = `
 [
     {
@@ -211,84 +124,6 @@ const AddrListInteractiveABI = `
     }
 ]`
 
-const DposFactoryInteractiveABI = `[
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "name": "getActiveValidators",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "distributeBlockReward",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getTopValidators",
-        "outputs": [
-            {
-                "internalType": "address[]",
-                "name": "",
-                "type": "address[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address[]",
-                "name": "_candidates",
-                "type": "address[]"
-            },
-            {
-                "internalType": "address",
-                "name": "_admin",
-                "type": "address"
-            }
-        ],
-        "name": "initialize",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address[]",
-                "name": "newSet",
-                "type": "address[]"
-            },
-            {
-                "internalType": "uint256",
-                "name": "epoch",
-                "type": "uint256"
-            }
-        ],
-        "name": "updateActiveValidatorSet",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-]`
-
 const PunishV1InteractiveABI = `[
    {
      "inputs": [],
@@ -304,6 +139,45 @@ const ValidatorFactoryABI = `[
       "inputs": [],
       "stateMutability": "nonpayable",
       "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "ChallengeCreate",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "ChallengeEnd",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "MarginCalls",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
     },
     {
       "inputs": [],
@@ -354,11 +228,134 @@ const ValidatorFactoryABI = `[
       "inputs": [
         {
           "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "seed",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "challenge_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "root_hash",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum ValidatorFactory.ChallengeState",
+          "name": "_state",
+          "type": "uint8"
+        }
+      ],
+      "name": "challengeFinish",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "md5_seed",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "url",
+          "type": "string"
+        }
+      ],
+      "name": "challengeProvider",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "challenge_all_percent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "challenge_sdl_trx_id",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "_new_admin",
           "type": "address"
         }
       ],
       "name": "changeAdminAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_trx_id",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeChallengeSdlTrxID",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_max_challenge_percent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_challenge_all_percent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_max_challenge_time",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_max_provider_start_challenge_time",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeMaxChallengeParam",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -385,6 +382,24 @@ const ValidatorFactoryABI = `[
         }
       ],
       "name": "changePunishAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_punish_percent",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_new_punish_all_percent",
+          "type": "uint256"
+        }
+      ],
+      "name": "changePunishPercent",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -429,11 +444,50 @@ const ValidatorFactoryABI = `[
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "_new_lock",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeValidatorLockTime",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "_validator_min_pledgeAmount",
           "type": "uint256"
         }
       ],
       "name": "changeValidatorMinPledgeAmount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_interval",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeValidatorPunishInterval",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_start_limit",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeValidatorPunishStartTime",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -467,6 +521,19 @@ const ValidatorFactoryABI = `[
         }
       ],
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "current_challenge_provider_count",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -552,12 +619,123 @@ const ValidatorFactoryABI = `[
     },
     {
       "inputs": [],
+      "name": "getAllValidator",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "validator",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "validator_contract",
+              "type": "address"
+            },
+            {
+              "internalType": "enum ValidatorState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "start_time",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ValidatorFactory.ValidatorInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getAllValidatorLength",
       "outputs": [
         {
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider_owner",
+          "type": "address"
+        }
+      ],
+      "name": "getProviderChallengeInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "provider",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "challenge_validator",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "md5_seed",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "url",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "create_challenge_time",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "challenge_finish_time",
+              "type": "uint256"
+            },
+            {
+              "internalType": "enum ValidatorFactory.ChallengeState",
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "challenge_amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "seed",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "root_hash",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "index",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ValidatorFactory.providerChallengeInfo",
+          "name": "",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -609,6 +787,45 @@ const ValidatorFactoryABI = `[
     },
     {
       "inputs": [],
+      "name": "max_challenge_percent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "max_challenge_time",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "max_provider_start_challenge_time",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "max_validator_count",
       "outputs": [
         {
@@ -640,13 +857,125 @@ const ValidatorFactoryABI = `[
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "providerFactory",
-      "outputs": [
+      "inputs": [
         {
           "internalType": "address",
           "name": "",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "provider_challenge_info",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "challenge_validator",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "md5_seed",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "url",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "create_challenge_time",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "challenge_finish_time",
+          "type": "uint256"
+        },
+        {
+          "internalType": "enum ValidatorFactory.ChallengeState",
+          "name": "state",
+          "type": "uint8"
+        },
+        {
+          "internalType": "uint256",
+          "name": "challenge_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "seed",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "root_hash",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "provider_factory",
+      "outputs": [
+        {
+          "internalType": "contract IProviderFactory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "provider_index",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "provider_last_challenge_state",
+      "outputs": [
+        {
+          "internalType": "enum ValidatorFactory.ChallengeState",
+          "name": "",
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -699,19 +1028,6 @@ const ValidatorFactoryABI = `[
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_provider_factory",
-          "type": "address"
-        }
-      ],
-      "name": "setProviderFactory",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "team_address",
       "outputs": [
@@ -751,6 +1067,32 @@ const ValidatorFactoryABI = `[
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "name": "validatorNotSubmitResult",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "validator_lock_time",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "validator_percent",
       "outputs": [
@@ -766,6 +1108,32 @@ const ValidatorFactoryABI = `[
     {
       "inputs": [],
       "name": "validator_pledgeAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "validator_punish_interval",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "validator_punish_start_limit",
       "outputs": [
         {
           "internalType": "uint256",
@@ -799,23 +1167,7 @@ const ValidatorFactoryABI = `[
 
 var ProviderFactoryABI = `[
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_admin",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_order_factory",
-          "type": "address"
-        },
-        {
-          "internalType": "address",
-          "name": "_auditor_factory",
-          "type": "address"
-        }
-      ],
+      "inputs": [],
       "stateMutability": "nonpayable",
       "type": "constructor"
     },
@@ -834,15 +1186,9 @@ var ProviderFactoryABI = `[
     },
     {
       "inputs": [],
-      "name": "MIN_VALUE_TO_BE_PROVIDER",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
+      "name": "addMargin",
+      "outputs": [],
+      "stateMutability": "payable",
       "type": "function"
     },
     {
@@ -866,6 +1212,35 @@ var ProviderFactoryABI = `[
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "cpu_count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "memory_count",
+          "type": "uint256"
+        }
+      ],
+      "name": "calcProviderAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -900,12 +1275,61 @@ var ProviderFactoryABI = `[
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "new_cpu_decimal",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "new_memory_decimal",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeDecimal",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "new_order_factory",
           "type": "address"
         }
       ],
       "name": "changeOrderFactory",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_min",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_new_max",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeProviderLimit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_lock_time",
+          "type": "uint256"
+        }
+      ],
+      "name": "changeProviderLockTime",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -941,6 +1365,24 @@ var ProviderFactoryABI = `[
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "provider_owner",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "whether_start",
+          "type": "bool"
+        }
+      ],
+      "name": "changeProviderState",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "cpu_count",
           "type": "uint256"
@@ -969,30 +1411,50 @@ var ProviderFactoryABI = `[
     {
       "inputs": [
         {
+          "internalType": "address",
+          "name": "_punish_address",
+          "type": "address"
+        }
+      ],
+      "name": "changePunishAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
-          "name": "cpu_count",
+          "name": "_new_punish_start_limit",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "memory_count",
+          "name": "_new_punish_interval",
+          "type": "uint256"
+        }
+      ],
+      "name": "changePunishParam",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_new_punish_percent",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "storage_amount",
+          "name": "_new_punish_all_percent",
           "type": "uint256"
         }
       ],
-      "name": "clacProviderAmount",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "pure",
+      "name": "changePunishPercent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -1067,6 +1529,32 @@ var ProviderFactoryABI = `[
         }
       ],
       "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimal_cpu",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimal_memory",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1279,6 +1767,11 @@ var ProviderFactoryABI = `[
                   "internalType": "uint256",
                   "name": "last_challenge_time",
                   "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "last_margin_time",
+                  "type": "uint256"
                 }
               ],
               "internalType": "struct providerInfo",
@@ -1431,6 +1924,11 @@ var ProviderFactoryABI = `[
                   "internalType": "uint256",
                   "name": "last_challenge_time",
                   "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "last_margin_time",
+                  "type": "uint256"
                 }
               ],
               "internalType": "struct providerInfo",
@@ -1451,6 +1949,25 @@ var ProviderFactoryABI = `[
           "internalType": "struct ProviderFactory.providerInfos",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "punish_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPunishAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -1509,6 +2026,58 @@ var ProviderFactoryABI = `[
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_admin",
+          "type": "address"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "initialized",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "max_value_tobe_provider",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "min_value_tobe_provider",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "order_factory",
       "outputs": [
@@ -1522,14 +2091,8 @@ var ProviderFactoryABI = `[
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "provider_pledge",
+      "inputs": [],
+      "name": "provider_lock_time",
       "outputs": [
         {
           "internalType": "uint256",
@@ -1561,9 +2124,67 @@ var ProviderFactoryABI = `[
     },
     {
       "inputs": [],
-      "name": "reOpenProvider",
-      "outputs": [],
-      "stateMutability": "payable",
+      "name": "punish_address",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "punish_all_percent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "punish_interval",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "punish_percent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "punish_start_limit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -1593,9 +2214,119 @@ var ProviderFactoryABI = `[
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "name": "removePunishList",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "total_all",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "cpu_count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "memory_count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "storage_count",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "total_used",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "cpu_count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "memory_count",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "storage_count",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "new_provider",
+          "type": "address"
+        }
+      ],
+      "name": "tryPunish",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "val_factory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider_owner",
+          "type": "address"
+        }
+      ],
+      "name": "whetherCanPOR",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawMargin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
     }
-  ]
- `
+  ]`
 
 // DevMappingPosition is the position of the state variable `devs`.
 // Since the state variables are as follow:
@@ -1629,8 +2360,9 @@ var (
 	AddressListContractAddr      = common.HexToAddress("0x000000000000000000000000000000000000c001")
 	ValidatorFactoryContractName = "validator_factory"
 	ValidatorFactoryContractAddr = common.HexToAddress("0x000000000000000000000000000000000000c002")
-	abiMap                       map[string]abi.ABI
 	ProviderFactoryContractName  = "provider_factory"
+	ProviderFactoryContractAddr  = common.HexToAddress("0x000000000000000000000000000000000000C003")
+	abiMap                       map[string]abi.ABI
 )
 
 func init() {

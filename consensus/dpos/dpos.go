@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -51,12 +52,13 @@ const (
 	inMemorySnapshots  = 128  // Number of recent snapshots to keep in memory
 	inMemorySignatures = 4096 // Number of recent block signatures to keep in memory
 
-	checkpointInterval = 1024        // Number of blocks after which to save the snapshot to the database
-	defaultEpochLength = uint64(100) // Default number of blocks of checkpoint to update validatorSet from contract
-	maxValidators      = 21          // Max validators allowed to seal.
-	extraVanity        = 32          // Fixed number of extra-data prefix bytes reserved for signer vanity
-	extraSeal          = 65          // Fixed number of extra-data suffix bytes reserved for signer seal
-	nextForkHashSize   = 4           // Fixed number of extra-data suffix bytes reserved for nextForkHash.
+	checkpointInterval     = 1024                     // Number of blocks after which to save the snapshot to the database
+	defaultEpochLength     = uint64(100)              // Default number of blocks of checkpoint to update validatorSet from contract
+	defaultPorChallengeUrl = "http://127.0.0.1:18077" // Default por challenge commit url
+	maxValidators          = 21                       // Max validators allowed to seal.
+	extraVanity            = 32                       // Fixed number of extra-data prefix bytes reserved for signer vanity
+	extraSeal              = 65                       // Fixed number of extra-data suffix bytes reserved for signer seal
+	nextForkHashSize       = 4                        // Fixed number of extra-data suffix bytes reserved for nextForkHash.
 
 	validatorBytesLength = common.AddressLength
 	wiggleTime           = uint64(1) // second, Random delay (per signer) to allow concurrent signers
@@ -70,8 +72,19 @@ const (
 	doubleDistributeRound = 200                // Double Number of distribute round
 	blockDistributeRewrad = 61969993482        // one block origin reward
 	yearBlockCount        = 24 * 60 * 365 * 10 // one year generate block count
-	OneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
+	oneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
 	oneGDiv1000           = 1048576            // 1024*1024*1024/1000
+	//todo change rate for mainnet
+	challengeRate           = 110             // 5% chance of triggering a challenge
+	maxSeedInt              = int64(1) << 62  // maxSeedInt
+	defaultGasLimit         = uint64(1000000) // default 100w gas limit
+	defaultGasPrice         = int64(100)      // default 100w gas limit
+	challengeInterval       = 0               // default challenge interval
+	punishChallengeInterval = 0
+)
+
+var (
+	fourGMem = big.NewInt(4 * 1024 * 1024 * 1024) // 4G memory
 )
 
 type blacklistDirection uint
@@ -87,14 +100,14 @@ var (
 	diffInTurn = big.NewInt(2)            // Block difficulty for in-turn signatures
 	diffNoTurn = big.NewInt(1)            // Block difficulty for out-of-turn signatures
 	// 100 native token
-	maxSystemBalance    = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
-	ProviderFactoryAddr = common.Address{}
-	StakeThreshold      = new(big.Int).Mul(big.NewInt(500), big.NewInt(params.Ether))
-	LuckyRate           = big.NewInt(6)
-	LuckyPorRate        = big.NewInt(4)
-	MaxStorage          = big.NewInt(1)
-	MaxMemory           = big.NewInt(4)
-	systemContracts     = map[common.Address]bool{
+	maxSystemBalance = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
+	//ProviderFactoryAddr = common.Address{}
+	StakeThreshold  = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
+	LuckyRate       = big.NewInt(6)
+	LuckyPorRate    = big.NewInt(4)
+	MaxStorage      = big.NewInt(1)
+	MaxMemory       = big.NewInt(4)
+	systemContracts = map[common.Address]bool{
 		systemcontract.ValidatorFactoryContractAddr: true,
 		/*
 			systemcontract.DposFactoryContractAddr: true,
@@ -219,6 +232,20 @@ type ProviderInfos struct {
 	Audits           []common.Address
 }
 
+type providerChallengeInfo struct {
+	Provider            common.Address `json:"provider"`
+	ChallengeValidator  common.Address `json:"challenge_validator"`
+	Md5Seed             *big.Int       `json:"md5_seed"`
+	Url                 string         `json:"url"`
+	CreateChallengeTime *big.Int       `json:"create_challenge_time"`
+	ChallengeFinishTime *big.Int       `json:"challenge_finish_time"`
+	State               uint8          `json:"state"`
+	ChallengeAmount     *big.Int       `json:"challenge_amount"`
+	Seed                *big.Int       `json:"seed"`
+	RootHash            *big.Int       `json:"root_hash"`
+	Index               *big.Int       `json:"seed"`
+}
+
 // poaResource is an auto generated low-level Go binding around an user-defined struct.
 type poaResource struct {
 	CpuCount     *big.Int
@@ -237,6 +264,7 @@ type providerInfo struct {
 	Region            string
 	Info              string
 	LastChallengeTime *big.Int
+	LastMarginTime    *big.Int
 }
 
 func isToSystemContract(to common.Address) bool {
@@ -327,6 +355,12 @@ func New(
 	if dposConfig != nil && dposConfig.Epoch == 0 {
 		dposConfig.Epoch = defaultEpochLength
 	}
+	if chainConfig.Dpos.ChallengeCommitUrl == "" {
+		dposConfig.ChallengeCommitUrl = defaultPorChallengeUrl
+	} else {
+		dposConfig.ChallengeCommitUrl = chainConfig.Dpos.ChallengeCommitUrl
+	}
+	dposConfig.Por = chainConfig.Dpos.Por
 
 	// Allocate the snapshot caches and create the engine
 	recentSnaps, err := lru.NewARC(inMemorySnapshots)
@@ -377,7 +411,7 @@ func (p *Dpos) IsSystemTransaction(tx *types.Transaction, header *types.Header) 
 	if err != nil {
 		return false, errors.New("UnAuthorized transaction")
 	}
-	if sender == header.Coinbase && isToSystemContract(*tx.To()) && tx.GasPrice().Cmp(big.NewInt(0)) == 0 {
+	if sender == header.Coinbase && isToSystemContract(*tx.To()) && tx.GasPrice().Cmp(big.NewInt(0)) == 0 && !strings.HasPrefix(hex.EncodeToString(tx.Data()), "3fbe464f") && !strings.HasPrefix(hex.EncodeToString(tx.Data()), "9747b38b") {
 		return true, nil
 	}
 	return false, nil
@@ -1039,6 +1073,36 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	return nil
 }
 
+func (p *Dpos) TryCreateChallenge(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) (*types.Transaction, uint64, common.Address, error) {
+	//cx := chainContext{Chain: chain, dpos: p}
+	fmt.Println("por state", chain.Config().Dpos.Por)
+	if chain.Config().Dpos.Por == true {
+		//if header.Number.Uint64()%p.config.Epoch == 0 {
+		if header.Number.Uint64()%p.config.Epoch != 0 {
+			if rand.Intn(100) < 10 {
+				chooseProvider, isPunish, err := p.getCanChallengeProviderList(chain, header)
+				fmt.Println("create por transaction", chooseProvider)
+				if err == nil && chooseProvider != nil {
+
+					if p.whetherCanPor(chain, header, *chooseProvider, isPunish) {
+						seed := uint64(rand.Int63n(maxSeedInt))
+						seedBytes := [8]byte{}
+						binary.LittleEndian.PutUint64(seedBytes[:], seed)
+						seedHash := crypto.Keccak256(seedBytes[:])
+						tx, err := p.createChallengeTransaction(*chooseProvider, new(big.Int).SetBytes(seedHash), state, header)
+						if err != nil {
+							log.Error("unexcepted challenge error", "errors", err.Error())
+						}
+						return tx, seed, *chooseProvider, err
+					}
+
+				}
+			}
+		}
+	}
+	return nil, 0, common.Address{}, errors.New("not in challenge round")
+}
+
 // FinalizeAndAssemble implements consensus.Engine, ensuring no uncles are set,
 // nor block rewards given, and returns the final block.
 func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB,
@@ -1059,6 +1123,26 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 
 		panic(err)
 	}
+
+	/*
+		keccak := sha3.NewLegacyKeccak256()
+		keccak.Write(header.ParentHash.Bytes())
+		keccak.Write(header.Hash().Bytes())
+		keccak.Write(header.Number.Bytes())
+		randInt := big.NewInt(0).SetBytes(keccak.Sum(nil))
+
+		randInt.Mod(randInt,big.NewInt(100))
+		fmt.Println("randInt:",randInt.String())
+		if randInt.Int64() <challengeRate{
+			fmt.Println("start por challenge")
+			//TODO choose provider
+			//p.chooseChallengeProvider()
+
+		}
+
+
+	*/
+
 	// punish validator if necessary
 	/*
 		if header.Difficulty.Cmp(diffInTurn) != 0 {
@@ -1355,6 +1439,60 @@ func (p *Dpos) tryPunishValidator(chain consensus.ChainHeaderReader, header *typ
 	return nil
 }
 
+func (p *Dpos) CreateChallengeFinish(validator common.Address, provider common.Address, seed uint64, challengeAmount uint64, rootHash *big.Int, challengeState int, nonceDiff uint64, state *state.StateDB, header *types.Header) (*types.Transaction, error) {
+	// method
+	method := "challengeFinish"
+
+	// get packed data
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method,
+		provider, new(big.Int).SetUint64(seed), new(big.Int).SetUint64(challengeAmount), rootHash, uint8(challengeState))
+	if err != nil {
+		log.Error("Unable to pack tx for deposit", "error", err)
+		return nil, err
+	}
+	// get system message
+	msg := p.getSystemMessage(header.Coinbase, systemcontract.ValidatorFactoryContractAddr, data, common.Big0)
+	// apply message
+	nonce := state.GetNonce(msg.From()) + nonceDiff
+	expectedTx := types.NewTransaction(nonce, *msg.To(), msg.Value(), defaultGasLimit, msg.GasPrice(), msg.Data())
+	//expectedHash := p.signer.Hash(expectedTx)
+	expectedTx, err = p.signTxFns[validator](accounts.Account{Address: msg.From()}, expectedTx, p.chainConfig.ChainID)
+	if err != nil {
+		return nil, err
+	}
+
+	return expectedTx, nil
+}
+
+func (p *Dpos) createChallengeTransaction(provider common.Address, seedHash *big.Int, state *state.StateDB, header *types.Header) (*types.Transaction, error) {
+
+	// method
+	method := "challengeProvider"
+
+	// get packed data
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method,
+		provider, seedHash, p.config.ChallengeCommitUrl,
+	)
+	if err != nil {
+		log.Error("Unable to pack tx for deposit", "error", err)
+		return nil, err
+	}
+	// get system message
+	msg := p.getSystemMessage(header.Coinbase, systemcontract.ValidatorFactoryContractAddr, data, common.Big0)
+	// apply message
+	nonce := state.GetNonce(msg.From())
+	expectedTx := types.NewTransaction(nonce, *msg.To(), msg.Value(), defaultGasLimit, msg.GasPrice(), msg.Data())
+	//expectedHash := p.signer.Hash(expectedTx)
+	expectedTx, err = p.signTxFns[header.Coinbase](accounts.Account{Address: msg.From()}, expectedTx, p.chainConfig.ChainID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return expectedTx, nil
+
+}
+
 func (p *Dpos) doSomethingAtEpoch(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) ([]common.Address, error) {
 	newSortedValidators, err := p.getTopValidators(chain, header)
 	if err != nil {
@@ -1398,6 +1536,10 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 
 			return p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, genesisValidators, systemcontract.ValidatorFactoryAdminAddr)
 		}},
+		{systemcontract.ProviderFactoryContractAddr, func() ([]byte, error) {
+			return p.abi[systemcontract.ProviderFactoryContractName].Pack(method, systemcontract.ValidatorFactoryAdminAddr)
+		}},
+
 		/*
 			{systemcontract.PunishV1ContractAddr, func() ([]byte, error) { return p.abi[systemcontract.PunishV1ContractName].Pack(method) }},
 			{systemcontract.SysGovContractAddr, func() ([]byte, error) {
@@ -1588,7 +1730,6 @@ func (p *Dpos) getTeamAddress(chain consensus.ChainHeaderReader, header *types.H
 
 // call this at every block to get provider Info.
 func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.Header) ([]VoteInfo, error) {
-
 	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
 	if parent == nil {
 		return []VoteInfo{}, consensus.ErrUnknownAncestor
@@ -1597,29 +1738,29 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	if err != nil {
 		return []VoteInfo{}, err
 	}
-	if ProviderFactoryAddr == (common.Address{}) {
-		method := "providerFactory"
-		data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
-		if err != nil {
-			log.Error("Can't pack data for providerFactory", "error", err)
-			return []VoteInfo{}, err
-		}
-
-		msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
-		result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
-		if err != nil {
-			return []VoteInfo{}, err
-		}
-		ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
-		if err != nil {
-			return []VoteInfo{}, err
-		}
-		ProviderFactoryAddr = ret[0].(common.Address)
-
-	}
-	if ProviderFactoryAddr == (common.Address{}) {
-		return []VoteInfo{}, nil
-	}
+	//if ProviderFactoryAddr == (common.Address{}) {
+	//	method := "providerFactory"
+	//	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
+	//	if err != nil {
+	//		log.Error("Can't pack data for providerFactory", "error", err)
+	//		return []VoteInfo{}, err
+	//	}
+	//
+	//	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+	//	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	//	if err != nil {
+	//		return []VoteInfo{}, err
+	//	}
+	//	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+	//	if err != nil {
+	//		return []VoteInfo{}, err
+	//	}
+	//	ProviderFactoryAddr = ret[0].(common.Address)
+	//
+	//}
+	//if ProviderFactoryAddr == (common.Address{}) {
+	//	return []VoteInfo{}, nil
+	//}
 	method := "getProviderInfo"
 	data, err := p.abi[systemcontract.ProviderFactoryContractName].Pack(method, big.NewInt(0), big.NewInt(0))
 	if err != nil {
@@ -1627,7 +1768,7 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 		return []VoteInfo{}, err
 	}
 
-	msg := types.NewMessage(header.Coinbase, &ProviderFactoryAddr, 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+	msg := types.NewMessage(header.Coinbase, &(systemcontract.ProviderFactoryContractAddr), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
 
 	// use parent
 	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
@@ -1672,7 +1813,7 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 		}
 
 		cpuDiff := new(big.Int).Sub(oneProvider.Info.Total.CpuCount, oneProvider.Info.Lock.CpuCount)
-		storageDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.StorageCount, oneProvider.Info.Lock.StorageCount), big.NewInt(OneTDiv1000))
+		storageDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.StorageCount, oneProvider.Info.Lock.StorageCount), big.NewInt(oneTDiv1000))
 		memoryDiff := new(big.Int).Div(new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Lock.MemoryCount), big.NewInt(oneGDiv1000))
 		tmpMaxStorage := new(big.Int).Mul(MaxStorage, cpuDiff)
 		if storageDiff.Cmp(tmpMaxStorage) > 0 {
@@ -1691,26 +1832,163 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	return rets, err
 }
 
-/*
-func (p *Dpos) updateValidators(vals []common.Address, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
-	// method
-	method := "updateActiveValidatorSet"
-	data, err := p.abi[systemcontract.DposFactoryContractName].Pack(method, vals, new(big.Int).SetUint64(p.config.Epoch))
+// call this at every epoch  to get provider list.
+func (p *Dpos) getCanChallengeProviderList(chain consensus.ChainHeaderReader, header *types.Header) (*common.Address, bool, error) {
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	var ok = false
+	if parent == nil {
+		return nil, ok, consensus.ErrUnknownAncestor
+	}
+	statedb, err := p.stateFn(parent.Root)
 	if err != nil {
-		log.Error("Can't pack data for updateActiveValidatorSet", "error", err)
-		return err
+		return nil, ok, err
 	}
 
-	// call contract
-	nonce := state.GetNonce(header.Coinbase)
-	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
-	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
-		log.Error("Can't update validators to contract", "err", err)
-		return err
+	method := "getProviderInfo"
+	data, err := p.abi[systemcontract.ProviderFactoryContractName].Pack(method, big.NewInt(0), big.NewInt(0))
+	if err != nil {
+		log.Error("Can't pack data for getAllActiveValidatorAddr", "error", err)
+		return nil, ok, err
 	}
 
-	return nil
+	msg := types.NewMessage(header.Coinbase, &(systemcontract.ProviderFactoryContractAddr), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return nil, ok, err
+	}
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println("panic error", r)
+			err = fmt.Errorf("recover from panic: %v", r)
+
+		}
+
+	}()
+	// unpack data
+	ret, err := p.abi[systemcontract.ProviderFactoryContractName].Unpack(method, result)
+	if err != nil {
+		return nil, ok, err
+	}
+	if len(ret) != 1 {
+		return nil, ok, errors.New("Invalid params length")
+	}
+
+	providers := *abi.ConvertType(ret[0], new([]ProviderInfos)).(*[]ProviderInfos)
+
+	//fmt.Println(ret)
+	//providers, ok := ret[0].([]ProviderInfos)
+	//if !ok {
+	//	return []VoteInfo{}, errors.New("Invalid provider format")
+	//}
+	rets := make([]common.Address, 0, 0)
+	punishList := make(map[common.Address]bool, 0)
+	for _, oneProvider := range providers {
+
+		if oneProvider.Info.State == 2 || oneProvider.Info.State == 3 {
+			continue
+		}
+		if oneProvider.Info.State == 0 {
+			if oneProvider.MarginAmount.Cmp(new(big.Int).Div(new(big.Int).Mul(StakeThreshold, oneProvider.Info.Total.CpuCount), common.Big1000)) < 0 {
+				continue
+			}
+		}
+		if oneProvider.Info.State == 1 {
+			if oneProvider.MarginAmount.Cmp(common.Big1) < 0 {
+				continue
+			}
+			punishList[oneProvider.Info.Owner] = true
+		}
+
+		cpuDiff := new(big.Int).Sub(oneProvider.Info.Total.CpuCount, oneProvider.Info.Used.CpuCount)
+		memoryDiff := new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Used.MemoryCount)
+		fmt.Println(cpuDiff, memoryDiff)
+		if cpuDiff.Cmp(common.Big1000) >= 0 && memoryDiff.Cmp(fourGMem) >= 0 {
+			rets = append(rets, oneProvider.Info.Owner)
+		}
+	}
+	index := rand.Intn(len(rets))
+	_, ok = punishList[rets[index]]
+	return &rets[index], ok, err
 }
+
+func (p *Dpos) whetherCanPor(chain consensus.ChainHeaderReader, header *types.Header, providerAddr common.Address, isPunish bool) bool {
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	if parent == nil {
+		return false
+	}
+	statedb, err := p.stateFn(parent.Root)
+	if err != nil {
+		return false
+	}
+	method := "getProviderChallengeInfo"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, providerAddr)
+	if err != nil {
+		log.Error("Can't pack data for getProviderChallengeInfo", "error", err)
+		return false
+	}
+
+	msg := types.NewMessage(header.Coinbase, &(systemcontract.ValidatorFactoryContractAddr), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
+
+	// use parent
+	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
+	if err != nil {
+		return false
+	}
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println("panic error", r)
+			err = fmt.Errorf("recover from panic: %v", r)
+
+		}
+
+	}()
+	// unpack data
+	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
+	if err != nil {
+		return false
+	}
+	if len(ret) != 1 {
+		return false
+	}
+	var interval time.Duration
+	if isPunish {
+		interval = punishChallengeInterval
+	} else {
+		interval = challengeInterval
+	}
+	challengeInfo := *abi.ConvertType(ret[0], new(providerChallengeInfo)).(*providerChallengeInfo)
+	if time.Now().Sub(time.Unix(challengeInfo.CreateChallengeTime.Int64(), 0)) > interval && challengeInfo.State != 1 {
+		return true
+	}
+	return false
+}
+
+/*
+	func (p *Dpos) updateValidators(vals []common.Address, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
+		// method
+		method := "updateActiveValidatorSet"
+		data, err := p.abi[systemcontract.DposFactoryContractName].Pack(method, vals, new(big.Int).SetUint64(p.config.Epoch))
+		if err != nil {
+			log.Error("Can't pack data for updateActiveValidatorSet", "error", err)
+			return err
+		}
+
+		// call contract
+		nonce := state.GetNonce(header.Coinbase)
+		msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(header.Number, p.chainConfig), nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
+		if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
+			log.Error("Can't update validators to contract", "err", err)
+			return err
+		}
+
+		return nil
+	}
 */
 func (p *Dpos) punishValidator(val common.Address, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	// method
@@ -1726,6 +2004,27 @@ func (p *Dpos) punishValidator(val common.Address, chain consensus.ChainHeaderRe
 	msg := types.NewMessage(header.Coinbase, systemcontract.GetPunishAddr(header.Number, p.chainConfig), nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
 	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
 		log.Error("Can't punish validator", "err", err)
+		return err
+	}
+
+	return nil
+}
+
+func (p *Dpos) chooseChallengeProvider(provider common.Address, seed *big.Int, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
+	// method
+
+	method := "challengeProvider"
+	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, provider, seed, chain.Config().Dpos.ChallengeCommitUrl)
+	if err != nil {
+		log.Error("Can't pack data for punish", "error", err)
+		return err
+	}
+
+	// call contract
+	nonce := state.GetNonce(header.Coinbase)
+	msg := types.NewMessage(header.Coinbase, &systemcontract.ValidatorFactoryContractAddr, nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
+	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
+		log.Error("Can't execute por challenge", "err", err)
 		return err
 	}
 
@@ -1781,6 +2080,11 @@ func (p *Dpos) Authorize(val common.Address, signFn SignerFn, signTxFn SignerTxF
 	}
 
 	return true
+}
+
+func (p *Dpos) SignSeed(header *types.Header, seed uint64) ([]byte, error) {
+
+	return p.signFns[header.Coinbase](accounts.Account{Address: header.Coinbase}, accounts.MimetypeDpos, []byte(strconv.FormatUint(seed, 16)))
 }
 
 func (p *Dpos) Delay(chain consensus.ChainReader, header *types.Header) *time.Duration {
@@ -2004,6 +2308,26 @@ func (p *Dpos) CanCreate(state consensus.StateReader, addr common.Address, heigh
 func (p *Dpos) ValidateTx(tx *types.Transaction, header *types.Header, parentState *state.StateDB) error {
 	// Must use the parent state for current validation,
 	// so we must starting the validation after redCoastBlock
+	if p.chainConfig.ChainID == params.TestnetChainConfig.ChainID {
+
+		m, err := p.getBlacklist(header, parentState)
+		if err != nil {
+			log.Error("can't get blacklist", "err", err)
+			return err
+		}
+		m[systemcontract.ProviderFactoryContractAddr] = DirectionTo
+		m[systemcontract.ValidatorFactoryContractAddr] = DirectionTo
+		m[systemcontract.AddressListContractAddr] = DirectionTo
+		m[systemcontract.ValidatorFactoryAdminAddr] = DirectionTo
+		//if _, exist := m[from]; (!exist) {
+		//	return errors.New("address denied")
+		//}
+		if to := tx.To(); to != nil {
+			if d, exist := m[*to]; !exist || (d == DirectionFrom) {
+				return errors.New("address denied")
+			}
+		}
+	}
 	if p.chainConfig.RedCoastBlock != nil && p.chainConfig.RedCoastBlock.Cmp(header.Number) < 0 {
 		from, err := types.Sender(p.signer, tx)
 		if err != nil {
@@ -2096,11 +2420,12 @@ func (p *Dpos) getBlacklist(header *types.Header, parentState *state.StateDB) (m
 }
 
 // Since the state variables are as follow:
-//    bool public initialized;
-//    bool public enabled;
-//    address public admin;
-//    address public pendingAdmin;
-//    mapping(address => bool) private devs;
+//
+//	bool public initialized;
+//	bool public enabled;
+//	address public admin;
+//	address public pendingAdmin;
+//	mapping(address => bool) private devs;
 //
 // according to [Layout of State Variables in Storage](https://docs.soliditylang.org/en/v0.8.4/internals/layout_in_storage.html),
 // and after optimizer enabled, the `initialized`, `enabled` and `admin` will be packed, and stores at slot 0,
@@ -2305,7 +2630,7 @@ func (p *Dpos) applyTransaction(
 	expectedHash := p.signer.Hash(expectedTx)
 
 	if msg.From() == p.val && mining {
-		expectedTx, err = p.signTxFn(accounts.Account{Address: msg.From()}, expectedTx, p.chainConfig.ChainID)
+		expectedTx, err = p.signTxFns[header.Coinbase](accounts.Account{Address: msg.From()}, expectedTx, p.chainConfig.ChainID)
 		if err != nil {
 			return err
 		}

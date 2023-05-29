@@ -86,7 +86,7 @@ var Defaults = Config{
 		GasCeil:       15000000,
 		GasPrice:      big.NewInt(params.GWei),
 		Recommit:      3 * time.Second,
-		DelayLeftOver: 50 * time.Millisecond,
+		DelayLeftOver: 500 * time.Millisecond,
 	},
 	TxPool:      core.DefaultTxPoolConfig,
 	RPCGasCap:   25000000,
@@ -173,6 +173,9 @@ type Config struct {
 	// Mining options
 	Miner miner.Config
 
+	// POR options
+	PorChallengeCommitUrl string
+	Por                   bool
 	// Ethash options
 	Ethash ethash.Config `toml:",omitempty"`
 

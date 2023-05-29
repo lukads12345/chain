@@ -48,7 +48,7 @@ var CheckpointOracles = map[common.Hash]*CheckpointOracleConfig{
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
 	MainnetChainConfig = &ChainConfig{
-		ChainID:        big.NewInt(176),
+		ChainID:        big.NewInt(222),
 		HomesteadBlock: big.NewInt(0),
 		DAOForkBlock:   big.NewInt(0),
 		DAOForkSupport: true,
@@ -479,6 +479,8 @@ type DposConfig struct {
 	Period                uint64 `json:"period"`                // Number of seconds between blocks to enforce
 	Epoch                 uint64 `json:"epoch"`                 // Epoch length to update validatorSet
 	EnableDevVerification bool   `json:"enableDevVerification"` // Enable developer address verification
+	ChallengeCommitUrl    string // An intermediate used for interaction when doing POR challenges
+	Por                   bool   // whether start por challenge
 }
 
 // String implements the stringer interface, returning the consensus engine details.

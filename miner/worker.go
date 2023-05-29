@@ -17,15 +17,15 @@
 package miner
 
 import (
+	"PureChain/consensus/dpos"
+	"encoding/hex"
 	"errors"
 	"fmt"
-	"PureChain/consensus/dpos"
 	"math/big"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"PureChain/common"
 	"PureChain/consensus"
 	"PureChain/consensus/parlia"
@@ -37,6 +37,7 @@ import (
 	"PureChain/metrics"
 	"PureChain/params"
 	"PureChain/trie"
+	mapset "github.com/deckarep/golang-set"
 )
 
 const (
@@ -153,6 +154,7 @@ type worker struct {
 	resultCh           chan *types.Block
 	startCh            chan struct{}
 	exitCh             chan struct{}
+	challengeCh        chan ChallengeFinishData
 	resubmitIntervalCh chan time.Duration
 	resubmitAdjustCh   chan *intervalAdjust
 
@@ -193,6 +195,7 @@ type worker struct {
 	skipSealHook func(*task) bool                   // Method to decide whether skipping the sealing.
 	fullTaskHook func()                             // Method to call before pushing the full sealing task.
 	resubmitHook func(time.Duration, time.Duration) // Method to call upon updating resubmitting interval.
+	porWork      *porWorker                         // porworker
 }
 
 func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus.Engine, eth Backend, mux *event.TypeMux, isLocalBlock func(*types.Block) bool, init bool) *worker {
@@ -217,9 +220,11 @@ func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus
 		resultCh:           make(chan *types.Block, resultQueueSize),
 		exitCh:             make(chan struct{}),
 		startCh:            make(chan struct{}, 1),
+		challengeCh:        make(chan ChallengeFinishData, 10),
 		resubmitIntervalCh: make(chan time.Duration),
 		resubmitAdjustCh:   make(chan *intervalAdjust, resubmitAdjustChanSize),
 		posCoinbase:        make([]common.Address, 0),
+		porWork:            nil,
 	}
 	// Subscribe NewTxsEvent for tx pool
 	worker.txsSub = eth.TxPool().SubscribeNewTxsEvent(worker.txsCh)
@@ -243,6 +248,7 @@ func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus
 	if init {
 		worker.startCh <- struct{}{}
 	}
+	worker.porWork = NewPorWorker(config, chainConfig, engine, eth, &worker.challengeCh)
 	return worker
 }
 
@@ -828,6 +834,10 @@ LOOP:
 		if stopTimer != nil {
 			select {
 			case <-stopTimer.C:
+				if len(w.current.txs) > 0 {
+					bData, _ := w.current.txs[0].MarshalJSON()
+					log.Info("Not enough time for further transactions", "tx0", string(bData))
+				}
 				log.Info("Not enough time for further transactions", "txs", len(w.current.txs))
 				break LOOP
 			default:
@@ -943,18 +953,19 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			}
 			header.Coinbase = w.coinbase
 		}
+		var realMiner common.Address
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
-			real_miner := w.posCoinbase[(w.minerIndex % len(w.posCoinbase))]
+			realMiner = w.posCoinbase[(w.minerIndex % len(w.posCoinbase))]
 			w.minerIndex += 1
 			if w.minerIndex > len(w.posCoinbase) {
 				w.minerIndex = w.minerIndex % len(w.posCoinbase)
 			}
 			addr_res := dpos.CheckHasInTurn(w.chain, w.posCoinbase, header)
 			if addr_res != (common.Address{}) {
-				real_miner = addr_res
+				realMiner = addr_res
 			}
 
-			exist := dpos.Authorize(real_miner, nil, nil)
+			exist := dpos.Authorize(realMiner, nil, nil)
 			if !exist {
 				log.Error("sign key not exists")
 				return
@@ -965,6 +976,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			log.Error("Failed to prepare header for mining", "err", err)
 			return
 		}
+
 		diffInTurn := big.NewInt(2) // Block difficulty for in-turn signatures
 		//diffNoTurn := big.NewInt(1)
 		if header.Difficulty.Cmp(diffInTurn) != 0 {
@@ -1012,6 +1024,58 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
 			w.commit(uncles, nil, false, tstart)
 		}
+		// Create por challenge transaction
+		if dpos, ok := w.engine.(*dpos.Dpos); ok {
+			nonceDiff := uint64(0)
+			tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
+
+			if err == nil {
+				seedSignature, err := dpos.SignSeed(header, seed)
+				if err != nil {
+					log.Error("unexcepted sign error", "err", err)
+				}
+				consTxs := make(map[common.Address]types.Transactions)
+				tTxs := make(types.Transactions, 0, 0)
+				tTxs = append(tTxs, tx)
+				consTxs[realMiner] = tTxs
+
+				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
+
+				if w.commitTransactions(txs, w.coinbase, interrupt) {
+					return
+				}
+
+				w.porWork.ChallengeChan <- challengeTask{Seed: seed, Provider: provider, SeedSignature: hex.EncodeToString(seedSignature), TaskBlockNumber: header.Number.Uint64(), TransactionHash: tx.Hash(), Validator: realMiner}
+
+				nonceDiff++
+			} else {
+				log.Debug(err.Error())
+			}
+			tTxs := make(types.Transactions, 0, 0)
+			for len(w.challengeCh) > 0 {
+				if len(w.challengeCh) == 0 {
+					break
+				}
+				oneData := <-w.challengeCh
+
+				tx, err := dpos.CreateChallengeFinish(oneData.Validator, oneData.Provider, oneData.Seed, oneData.challengeAmount, oneData.rootHash, oneData.challengeState, nonceDiff, env.state, header)
+				if err == nil {
+
+					tTxs = append(tTxs, tx)
+					nonceDiff++
+				}
+
+			}
+			if len(tTxs) > 0 {
+				w.eth.TxPool().AddLocals(tTxs)
+				//consTxs := make(map[common.Address]types.Transactions)
+				//consTxs[realMiner] = tTxs
+				//txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
+				//if w.commitTransactions(txs, w.coinbase, interrupt) {
+				//	return
+				//}
+			}
+		}
 
 		// Fill the block with all available pending transactions.
 		pending, err := w.eth.TxPool().Pending()
@@ -1029,8 +1093,10 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					localTxs[account] = txs
 				}
 			}
+
 			if len(localTxs) > 0 {
 				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, localTxs)
+
 				if w.commitTransactions(txs, w.coinbase, interrupt) {
 					return
 				}

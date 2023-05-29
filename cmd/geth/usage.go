@@ -54,6 +54,9 @@ var AppHelpFlagGroups = []flags.FlagGroup{
 			utils.LightKDFFlag,
 			utils.WhitelistFlag,
 			utils.TriesInMemoryFlag,
+			utils.PorFlag,
+			utils.PorChallengeCommitUrlFlag,
+			utils.AddressTypeFlag,
 		},
 	},
 	{

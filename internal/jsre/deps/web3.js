@@ -3950,9 +3950,74 @@ var outputPostFormatter = function(post){
 
     return post;
 };
+//
+// function base58Decode(string) {
+//   var ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+//   var ALPHABET_MAP = {};
+//   var i = 0;
+//
+//   while (i < ALPHABET.length) {
+//     ALPHABET_MAP[ALPHABET.charAt(i)] = i;
+//     i++;
+//   }
+//   var bytes, c, carry, j;
+//   if (string.length === 0) {
+//     return new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(0);
+//   }
+//   i = void 0;
+//   j = void 0;
+//   bytes = [0];
+//   i = 0;
+//   while (i < string.length) {
+//     c = string[i];
+//     if (!(c in ALPHABET_MAP)) {
+//       throw "Base58.decode received unacceptable input. Character '" + c + "' is not in the Base58 alphabet.";
+//     }
+//     j = 0;
+//     while (j < bytes.length) {
+//       bytes[j] *= 58;
+//       j++;
+//     }
+//     bytes[0] += ALPHABET_MAP[c];
+//     carry = 0;
+//     j = 0;
+//     while (j < bytes.length) {
+//       bytes[j] += carry;
+//       carry = bytes[j] >> 8;
+//       bytes[j] &= 0xff;
+//       ++j;
+//     }
+//     while (carry) {
+//       bytes.push(carry & 0xff);
+//       carry >>= 8;
+//     }
+//     i++;
+//   }
+//   i = 0;
+//   while (string[i] === "1" && i < string.length - 1) {
+//     bytes.push(0);
+//     i++;
+//   }
+//   return new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(bytes.reverse());
+// };
+var MAP = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+var to_b58   = function(B,A){var d=[],s="",i,j,c,n;for(i in B){j=0,c=B[i];s+=c||s.length^i?"":1;while(j in d||c){n=d[j];n=n?n*256+c:c;c=n/58|0;d[j]=n%58;j++}}while(j--)s+=A[d[j]];return s};
+var from_b58 = function(S,A){var d=[],b=[],i,j,c,n;for(i in S){j=0,c=A.indexOf(S[i]);if(c<0)return undefined;c||b.length^i?i:b.push(0);while(j in d||c){n=d[j];n=n?n*58+c:c;c=n>>8;d[j]=n%256;j++}}while(j--)b.push(d[j]);
+  //console.log(String.fromCodePoint(...b));
+
+  var res="";
+  for (var index = 0; index < b.length; index++) {
+    res += String.fromCharCode(b[index]);
+  }
+    return res};
 
 var inputAddressFormatter = function (address) {
-    var iban = new Iban(address);
+    if(/^U4.+$/.test(address)){
+      address= "0x"+from_b58(address.substr(2),MAP)
+    }
+  var iban = new Iban(address);
+
     if (iban.isValid() && iban.isDirect()) {
         return '0x' + iban.address();
     } else if (utils.isStrictAddress(address)) {

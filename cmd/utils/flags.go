@@ -25,7 +25,7 @@ import (
 	"math"
 	"math/big"
 	"os"
-	"path/filepath"
+	//"path/filepath"
 	godebug "runtime/debug"
 	"strconv"
 	"strings"
@@ -159,22 +159,7 @@ var (
 		Name:  "testnet",
 		Usage: "Ethereum testnet",
 	}
-	GoerliFlag = cli.BoolFlag{
-		Name:  "goerli",
-		Usage: "Görli network: pre-configured proof-of-authority test network",
-	}
-	YoloV3Flag = cli.BoolFlag{
-		Name:  "yolov3",
-		Usage: "YOLOv3 network: pre-configured proof-of-authority shortlived test network.",
-	}
-	RinkebyFlag = cli.BoolFlag{
-		Name:  "rinkeby",
-		Usage: "Rinkeby network: pre-configured proof-of-authority test network",
-	}
-	RopstenFlag = cli.BoolFlag{
-		Name:  "ropsten",
-		Usage: "Ropsten network: pre-configured proof-of-work test network",
-	}
+
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
 		Usage: "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
@@ -217,6 +202,10 @@ var (
 		Name:  "syncmode",
 		Usage: `Blockchain sync mode ("fast", "full", "snap" or "light")`,
 		Value: &defaultSyncMode,
+	}
+	AddressTypeFlag = cli.BoolFlag{
+		Name:  "ethcompatible",
+		Usage: "Determine whether the address is in ETH compatible format",
 	}
 	GCModeFlag = cli.StringFlag{
 		Name:  "gcmode",
@@ -461,6 +450,14 @@ var (
 		Name:  "miner.gasprice",
 		Usage: "Minimum gas price for mining a transaction",
 		Value: ethconfig.Defaults.Miner.GasPrice,
+	}
+	PorFlag = cli.BoolFlag{
+		Name:  "por",
+		Usage: "Whether to start the por challenge",
+	}
+	PorChallengeCommitUrlFlag = cli.StringFlag{
+		Name:  "por.challenge.commit.url",
+		Usage: "An intermediate used for interaction when doing POR challenges",
 	}
 	MinerEtherbaseFlag = cli.StringFlag{
 		Name:  "miner.etherbase",
@@ -811,20 +808,20 @@ var (
 // then a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
-		if ctx.GlobalBool(RopstenFlag.Name) {
-			// Maintain compatibility with older Geth configurations storing the
-			// Ropsten database in `testnet` instead of `ropsten`.
-			return filepath.Join(path, "ropsten")
-		}
-		if ctx.GlobalBool(RinkebyFlag.Name) {
-			return filepath.Join(path, "rinkeby")
-		}
-		if ctx.GlobalBool(GoerliFlag.Name) {
-			return filepath.Join(path, "goerli")
-		}
-		if ctx.GlobalBool(YoloV3Flag.Name) {
-			return filepath.Join(path, "yolo-v3")
-		}
+		//if ctx.GlobalBool(RopstenFlag.Name) {
+		//	// Maintain compatibility with older Geth configurations storing the
+		//	// Ropsten database in `testnet` instead of `ropsten`.
+		//	return filepath.Join(path, "ropsten")
+		//}
+		//if ctx.GlobalBool(RinkebyFlag.Name) {
+		//	return filepath.Join(path, "rinkeby")
+		//}
+		//if ctx.GlobalBool(GoerliFlag.Name) {
+		//	return filepath.Join(path, "goerli")
+		//}
+		//if ctx.GlobalBool(YoloV3Flag.Name) {
+		//	return filepath.Join(path, "yolo-v3")
+		//}
 		return path
 	}
 	Fatalf("Cannot determine default data directory, please set manually (--datadir)")
@@ -871,14 +868,14 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 	switch {
 	case ctx.GlobalIsSet(BootnodesFlag.Name):
 		urls = SplitAndTrim(ctx.GlobalString(BootnodesFlag.Name))
-	case ctx.GlobalBool(RopstenFlag.Name):
-		urls = params.RopstenBootnodes
-	case ctx.GlobalBool(RinkebyFlag.Name):
-		urls = params.RinkebyBootnodes
-	case ctx.GlobalBool(GoerliFlag.Name):
-		urls = params.GoerliBootnodes
-	case ctx.GlobalBool(YoloV3Flag.Name):
-		urls = params.YoloV3Bootnodes
+	//case ctx.GlobalBool(RopstenFlag.Name):
+	//	urls = params.RopstenBootnodes
+	//case ctx.GlobalBool(RinkebyFlag.Name):
+	//	urls = params.RinkebyBootnodes
+	//case ctx.GlobalBool(GoerliFlag.Name):
+	//	urls = params.GoerliBootnodes
+	//case ctx.GlobalBool(YoloV3Flag.Name):
+	//	urls = params.YoloV3Bootnodes
 	case ctx.GlobalBool(TestnetFlag.Name):
 		urls = params.TestnetBootnodes
 	case cfg.BootstrapNodes != nil:
@@ -1320,24 +1317,24 @@ func setDataDir(ctx *cli.Context, cfg *node.Config) {
 		cfg.DataDir = ctx.GlobalString(DataDirFlag.Name)
 	case ctx.GlobalBool(DeveloperFlag.Name):
 		cfg.DataDir = "" // unless explicitly requested, use memory databases
-	case ctx.GlobalBool(RopstenFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		// Maintain compatibility with older Geth configurations storing the
-		// Ropsten database in `testnet` instead of `ropsten`.
-		legacyPath := filepath.Join(node.DefaultDataDir(), "testnet")
-		if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
-			log.Warn("Using the deprecated `testnet` datadir. Future versions will store the Ropsten chain in `ropsten`.")
-			cfg.DataDir = legacyPath
-		} else {
-			cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
-		}
-
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
-	case ctx.GlobalBool(RinkebyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "rinkeby")
-	case ctx.GlobalBool(GoerliFlag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
-	case ctx.GlobalBool(YoloV3Flag.Name) && cfg.DataDir == node.DefaultDataDir():
-		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "yolo-v3")
+		//case ctx.GlobalBool(RopstenFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		//	// Maintain compatibility with older Geth configurations storing the
+		//	// Ropsten database in `testnet` instead of `ropsten`.
+		//	legacyPath := filepath.Join(node.DefaultDataDir(), "testnet")
+		//	if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
+		//		log.Warn("Using the deprecated `testnet` datadir. Future versions will store the Ropsten chain in `ropsten`.")
+		//		cfg.DataDir = legacyPath
+		//	} else {
+		//		cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
+		//	}
+		//
+		//	cfg.DataDir = filepath.Join(node.DefaultDataDir(), "ropsten")
+		//case ctx.GlobalBool(RinkebyFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		//	cfg.DataDir = filepath.Join(node.DefaultDataDir(), "rinkeby")
+		//case ctx.GlobalBool(GoerliFlag.Name) && cfg.DataDir == node.DefaultDataDir():
+		//	cfg.DataDir = filepath.Join(node.DefaultDataDir(), "goerli")
+		//case ctx.GlobalBool(YoloV3Flag.Name) && cfg.DataDir == node.DefaultDataDir():
+		//	cfg.DataDir = filepath.Join(node.DefaultDataDir(), "yolo-v3")
 	}
 }
 
@@ -1446,6 +1443,7 @@ func setMiner(ctx *cli.Context, cfg *miner.Config) {
 	if ctx.GlobalIsSet(MinerGasPriceFlag.Name) {
 		cfg.GasPrice = GlobalBig(ctx, MinerGasPriceFlag.Name)
 	}
+
 	if ctx.GlobalIsSet(MinerRecommitIntervalFlag.Name) {
 		cfg.Recommit = ctx.GlobalDuration(MinerRecommitIntervalFlag.Name)
 	}
@@ -1546,6 +1544,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	setWhitelist(ctx, cfg)
 	setLes(ctx, cfg)
 
+	if ctx.GlobalBool(AddressTypeFlag.Name) {
+		common.AddressType = 1
+	} else {
+		common.AddressType = 2
+	}
+
 	// Cap the cache allowance and tune the garbage collector
 	mem, err := gopsutil.VirtualMemory()
 	if err == nil {
@@ -1579,7 +1583,12 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	if ctx.GlobalIsSet(AncientFlag.Name) {
 		cfg.DatabaseFreezer = ctx.GlobalString(AncientFlag.Name)
 	}
-
+	if ctx.GlobalIsSet(PorChallengeCommitUrlFlag.Name) {
+		cfg.PorChallengeCommitUrl = ctx.GlobalString(PorChallengeCommitUrlFlag.Name)
+	}
+	if ctx.GlobalIsSet(PorFlag.Name) {
+		cfg.Por = ctx.GlobalBool(PorFlag.Name)
+	}
 	if gcmode := ctx.GlobalString(GCModeFlag.Name); gcmode != "full" && gcmode != "archive" {
 		Fatalf("--%s must be either 'full' or 'archive'", GCModeFlag.Name)
 	}
@@ -1604,6 +1613,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheTrieFlag.Name) {
 		cfg.TrieCleanCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheTrieFlag.Name) / 100
 	}
+
 	if ctx.GlobalIsSet(CacheTrieJournalFlag.Name) {
 		cfg.TrieCleanCacheJournal = ctx.GlobalString(CacheTrieJournalFlag.Name)
 	}
@@ -1748,6 +1758,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		if !ctx.GlobalIsSet(MinerGasPriceFlag.Name) {
 			cfg.Miner.GasPrice = big.NewInt(1)
 		}
+
 	default:
 		if cfg.NetworkId == 1 {
 			SetDNSDiscoveryDefaults(cfg, params.MainnetGenesisHash)
