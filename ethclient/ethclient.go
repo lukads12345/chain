@@ -278,7 +278,6 @@ func (ec *Client) TransactionsInBlock(ctx context.Context, number *big.Int) ([]*
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(len(rpcTxs))
 	txs := make([]*types.Transaction, 0, len(rpcTxs))
 	for _, tx := range rpcTxs {
 		txs = append(txs, tx.tx)
@@ -399,7 +398,6 @@ func (ec *Client) BalanceAt(ctx context.Context, account common.Address, blockNu
 // The block number can be nil, in which case the balance is taken from the latest known block.
 func (ec *Client) LockBalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error) {
 	var result hexutil.Big
-	fmt.Println("into LockBalanceAt")
 	err := ec.c.CallContext(ctx, &result, "eth_getLockBalance", account, toBlockNumArg(blockNumber))
 	return (*big.Int)(&result), err
 }

@@ -68,6 +68,7 @@ type porWorker struct {
 	ChallengeChan chan challengeTask
 	exitCh        chan struct{}
 	FinishCh      *chan ChallengeFinishData
+	LockList      map[common.Address]bool
 }
 
 func (p *porWorker) close() {
@@ -333,6 +334,7 @@ func NewPorWorker(config *Config, chainConfig *params.ChainConfig, engine consen
 		ChallengeChan: make(chan challengeTask, 10),
 		exitCh:        make(chan struct{}),
 		FinishCh:      finishCh,
+		LockList:      make(map[common.Address]bool),
 	}
 	go porWorker.mainLoop()
 	return porWorker
@@ -353,6 +355,8 @@ func queryReady(commitUrl string, blockNumber uint64, seed uint64) string {
 	return ""
 }
 
+
+
 func queryChallengeResult(commitUrl string, blockNumber uint64, seed uint64) string {
 	resp, err := http.Get(commitUrl + "/challenge_result?blockNumber=" + strconv.FormatUint(blockNumber, 10) + "&seed=" + strconv.FormatUint(seed, 10))
 	if err != nil {
@@ -369,6 +373,7 @@ func queryChallengeResult(commitUrl string, blockNumber uint64, seed uint64) str
 }
 
 func (p *porWorker) challengeMainLoop(challenge challengeTask) {
+	defer p.ReleaseLock(challenge.Validator)
 	for {
 		//wait for block confirm
 
@@ -377,17 +382,13 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 			blockTemp := p.chain.GetBlockByNumber(challenge.TaskBlockNumber)
 			txsReceipt := p.eth.BlockChain().GetReceiptsByHash(blockTemp.Hash())
 			if len(txsReceipt) == 0 {
-
 				return
 			}
 			seedByte := make([]byte, 8)
 			binary.LittleEndian.PutUint64(seedByte, challenge.Seed)
-			middle := legacySum(seedByte)
-			SeedHash := "0x" + hex.EncodeToString(middle)
-			fmt.Println("challenge seed ", SeedHash)
+
 			isFound := false
 			for _, txReceipt := range txsReceipt {
-				fmt.Println(txReceipt.TxHash.Hex(), challenge.TransactionHash.Hex())
 				if txReceipt.TxHash == challenge.TransactionHash {
 					if txReceipt.Status == 1 && len(txReceipt.Logs) > 0 {
 						isFound = true
@@ -399,7 +400,6 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 				}
 			}
 			if !isFound {
-				fmt.Println("challengeMainLoop return 2", challenge)
 				return
 			} else {
 				break
@@ -428,7 +428,6 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 					state = 2
 					challengeRes := challengeResult{}
 					json.Unmarshal([]byte(res), &challengeRes)
-
 					if challengeRes.Success && int64(len(challengeRes.Paths)) == challengeRes.ChallengeCount {
 						//todo cal root hash
 						if (time.Now().Sub(startTime)) < 3*time.Minute {
@@ -469,6 +468,20 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 		}
 	}
 }
+func (p *porWorker) AddLock(address common.Address) bool{
+
+
+	value,_ := p.LockList[address]
+	if value == true{
+		return false
+	}
+	p.LockList[address]=true
+	return true
+
+}
+func (p*porWorker) ReleaseLock(address common.Address){
+	p.LockList[address]=false
+}
 
 func (p *porWorker) mainLoop() {
 	if queryHeart(p.chain.Config().Dpos.ChallengeCommitUrl) == "" {
@@ -479,7 +492,6 @@ func (p *porWorker) mainLoop() {
 	for {
 		select {
 		case challenge := <-p.ChallengeChan:
-			fmt.Println(challenge)
 			go p.challengeMainLoop(challenge)
 
 		case <-p.exitCh:

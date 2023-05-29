@@ -590,7 +590,6 @@ func (s *PublicBlockChainAPI) GetLockBalance(ctx context.Context, address common
 	if state == nil || err != nil {
 		return nil, err
 	}
-	fmt.Println("PublicBlockChainAPI", "GetLockBalance")
 	return (*hexutil.Big)(state.GetLockBalance(address)), state.Error()
 }
 

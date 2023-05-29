@@ -75,12 +75,12 @@ const (
 	oneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
 	oneGDiv1000           = 1048576            // 1024*1024*1024/1000
 	//todo change rate for mainnet
-	challengeRate           = 110             // 5% chance of triggering a challenge
+	challengeRate           = 10             // One in 10,000  chance of triggering a challenge
 	maxSeedInt              = int64(1) << 62  // maxSeedInt
 	defaultGasLimit         = uint64(1000000) // default 100w gas limit
 	defaultGasPrice         = int64(100)      // default 100w gas limit
-	challengeInterval       = 0               // default challenge interval
-	punishChallengeInterval = 0
+	challengeInterval       = 4*time.Hour               // default challenge interval
+	punishChallengeInterval = 2*time.Hour
 )
 
 var (
@@ -776,7 +776,6 @@ func (p *Dpos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 	}
 
 	realTeamRate, realValRate := p.getDistributeRate(chain, header)
-	fmt.Println("getDistributeRate", realTeamRate, realValRate)
 	totalVote := big.NewInt(0)
 	for _, k := range providerDetailData {
 		totalVote.Add(totalVote, k.VotingPower)
@@ -1075,13 +1074,12 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 
 func (p *Dpos) TryCreateChallenge(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) (*types.Transaction, uint64, common.Address, error) {
 	//cx := chainContext{Chain: chain, dpos: p}
-	fmt.Println("por state", chain.Config().Dpos.Por)
+
 	if chain.Config().Dpos.Por == true {
 		//if header.Number.Uint64()%p.config.Epoch == 0 {
 		if header.Number.Uint64()%p.config.Epoch != 0 {
-			if rand.Intn(100) < 10 {
+			if rand.Intn(100000) < challengeRate {
 				chooseProvider, isPunish, err := p.getCanChallengeProviderList(chain, header)
-				fmt.Println("create por transaction", chooseProvider)
 				if err == nil && chooseProvider != nil {
 
 					if p.whetherCanPor(chain, header, *chooseProvider, isPunish) {
@@ -1124,36 +1122,7 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		panic(err)
 	}
 
-	/*
-		keccak := sha3.NewLegacyKeccak256()
-		keccak.Write(header.ParentHash.Bytes())
-		keccak.Write(header.Hash().Bytes())
-		keccak.Write(header.Number.Bytes())
-		randInt := big.NewInt(0).SetBytes(keccak.Sum(nil))
 
-		randInt.Mod(randInt,big.NewInt(100))
-		fmt.Println("randInt:",randInt.String())
-		if randInt.Int64() <challengeRate{
-			fmt.Println("start por challenge")
-			//TODO choose provider
-			//p.chooseChallengeProvider()
-
-		}
-
-
-	*/
-
-	// punish validator if necessary
-	/*
-		if header.Difficulty.Cmp(diffInTurn) != 0 {
-			if err := p.tryPunishValidator(chain, header, state); err != nil {
-
-				panic(err)
-			}
-		}*/
-
-	// deposit block reward if any tx exists.
-	//if len(txs) > 0 {
 	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
@@ -1905,7 +1874,7 @@ func (p *Dpos) getCanChallengeProviderList(chain consensus.ChainHeaderReader, he
 
 		cpuDiff := new(big.Int).Sub(oneProvider.Info.Total.CpuCount, oneProvider.Info.Used.CpuCount)
 		memoryDiff := new(big.Int).Sub(oneProvider.Info.Total.MemoryCount, oneProvider.Info.Used.MemoryCount)
-		fmt.Println(cpuDiff, memoryDiff)
+
 		if cpuDiff.Cmp(common.Big1000) >= 0 && memoryDiff.Cmp(fourGMem) >= 0 {
 			rets = append(rets, oneProvider.Info.Owner)
 		}

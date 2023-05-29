@@ -20,7 +20,6 @@ import (
 	"PureChain/consensus/dpos"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"math/big"
 	"sync"
 	"sync/atomic"
@@ -199,7 +198,6 @@ type worker struct {
 }
 
 func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus.Engine, eth Backend, mux *event.TypeMux, isLocalBlock func(*types.Block) bool, init bool) *worker {
-	fmt.Println("new Worker", chainConfig.RedCoastBlock)
 	worker := &worker{
 		config:             config,
 		chainConfig:        chainConfig,
@@ -1027,30 +1025,33 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		// Create por challenge transaction
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
 			nonceDiff := uint64(0)
-			tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
+			if w.porWork.AddLock(header.Coinbase){
+				tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
 
-			if err == nil {
-				seedSignature, err := dpos.SignSeed(header, seed)
-				if err != nil {
-					log.Error("unexcepted sign error", "err", err)
+				if err == nil {
+					seedSignature, err := dpos.SignSeed(header, seed)
+					if err != nil {
+						log.Error("unexcepted sign error", "err", err)
+					}
+					consTxs := make(map[common.Address]types.Transactions)
+					tTxs := make(types.Transactions, 0, 0)
+					tTxs = append(tTxs, tx)
+					consTxs[realMiner] = tTxs
+
+					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
+
+					if w.commitTransactions(txs, w.coinbase, interrupt) {
+						return
+					}
+
+					w.porWork.ChallengeChan <- challengeTask{Seed: seed, Provider: provider, SeedSignature: hex.EncodeToString(seedSignature), TaskBlockNumber: header.Number.Uint64(), TransactionHash: tx.Hash(), Validator: realMiner}
+
+					nonceDiff++
+				} else {
+					log.Debug(err.Error())
 				}
-				consTxs := make(map[common.Address]types.Transactions)
-				tTxs := make(types.Transactions, 0, 0)
-				tTxs = append(tTxs, tx)
-				consTxs[realMiner] = tTxs
-
-				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
-
-				if w.commitTransactions(txs, w.coinbase, interrupt) {
-					return
-				}
-
-				w.porWork.ChallengeChan <- challengeTask{Seed: seed, Provider: provider, SeedSignature: hex.EncodeToString(seedSignature), TaskBlockNumber: header.Number.Uint64(), TransactionHash: tx.Hash(), Validator: realMiner}
-
-				nonceDiff++
-			} else {
-				log.Debug(err.Error())
 			}
+
 			tTxs := make(types.Transactions, 0, 0)
 			for len(w.challengeCh) > 0 {
 				if len(w.challengeCh) == 0 {

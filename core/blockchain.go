@@ -1892,7 +1892,6 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		substart := time.Now()
 
 		receipts, logs, usedGas, err := bc.processor.Process(block, statedb, bc.vmConfig)
-		fmt.Println(block.Number(), usedGas, block.Transactions().Len())
 		if block.Transactions().Len() > 0 {
 			tttt, _ := block.Transactions()[0].MarshalJSON()
 			fmt.Println(usedGas, string(tttt))

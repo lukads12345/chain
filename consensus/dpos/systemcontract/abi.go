@@ -2369,7 +2369,7 @@ func init() {
 	abiMap = make(map[string]abi.ABI, 0)
 	tmpABI, err := abi.JSON(strings.NewReader(ValidatorFactoryABI))
 	if err != nil {
-		fmt.Println("ccccccccccccccc", err.Error())
+		fmt.Println("init error", err.Error())
 	}
 	abiMap[ValidatorFactoryContractName] = tmpABI
 	tmpABI, _ = abi.JSON(strings.NewReader(AddrListInteractiveABI))
