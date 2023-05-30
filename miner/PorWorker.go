@@ -21,8 +21,15 @@ import (
 )
 
 const (
-	safeBlockNumber = 5 // safe block number
-	oneLoopCount    = 5 // one round hash count
+	safeBlockNumber        = 5        // safe block number
+	oneLoopCount           = 5        // one round hash count
+	challengeTreeNodeCount = 50331648 // tree leaf count  for 3 G
+)
+const (
+	NotStart int = iota
+	Create
+	Success
+	Fail
 )
 
 type TreeNodeValue *[]byte
@@ -355,8 +362,6 @@ func queryReady(commitUrl string, blockNumber uint64, seed uint64) string {
 	return ""
 }
 
-
-
 func queryChallengeResult(commitUrl string, blockNumber uint64, seed uint64) string {
 	resp, err := http.Get(commitUrl + "/challenge_result?blockNumber=" + strconv.FormatUint(blockNumber, 10) + "&seed=" + strconv.FormatUint(seed, 10))
 	if err != nil {
@@ -411,19 +416,17 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 	res := submitSeed(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.Seed, challenge.TaskBlockNumber, strings.ToLower(challenge.Validator.Hex()), strings.ToLower(challenge.Provider.Hex()), challenge.TransactionHash.Hex(), challenge.SeedSignature)
 	startTime := time.Now()
 	state := 0 // 0 wait ready  1 commit challenge index  2 get challenge path verify and cal result
-	index := rand.Intn(50331648)
+	index := rand.Intn(challengeTreeNodeCount)
 	if res != "" {
 		for {
 			if state == 0 && queryReady(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed) == "success" {
-				state = 1
-
-				submitIndex(p.chain.Config().Dpos.ChallengeCommitUrl, uint64(index), challenge.TaskBlockNumber, challenge.Seed)
-				startTime = time.Now()
+				if submitIndex(p.chain.Config().Dpos.ChallengeCommitUrl, uint64(index), challenge.TaskBlockNumber, challenge.Seed) != "" {
+					state = 1
+					startTime = time.Now()
+				}
 			}
 			if state == 1 {
-
 				res := queryChallengeResult(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed)
-
 				if res != "" {
 					state = 2
 					challengeRes := challengeResult{}
@@ -437,20 +440,16 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 							} else {
 								rootHash = verifyTask(challenge.Seed, uint64(index), challengeRes)
 							}
-							//roothash := []byte{}
-
 							if rootHash != nil {
-
-								*p.FinishCh <- ChallengeFinishData{challengeState: 2, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: uint64(challengeRes.ChallengeCount), rootHash: rootHash, Validator: challenge.Validator}
-
+								*p.FinishCh <- ChallengeFinishData{challengeState: Success, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: uint64(challengeRes.ChallengeCount), rootHash: rootHash, Validator: challenge.Validator}
 							} else {
 
-								*p.FinishCh <- ChallengeFinishData{challengeState: 3, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
+								*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 
 							}
 							break
 						} else {
-							*p.FinishCh <- ChallengeFinishData{challengeState: 3, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
+							*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 							break
 						}
 					}
@@ -458,29 +457,28 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 
 			}
 
-			if (time.Now().Sub(startTime)) > 10*time.Minute {
+			if (time.Now().Sub(startTime)) > 7*time.Minute {
 				// not response
 
-				*p.FinishCh <- ChallengeFinishData{challengeState: 2, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
+				*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 				break
 			}
 			time.Sleep(time.Second * 10)
 		}
 	}
 }
-func (p *porWorker) AddLock(address common.Address) bool{
+func (p *porWorker) AddLock(address common.Address) bool {
 
-
-	value,_ := p.LockList[address]
-	if value == true{
+	value, _ := p.LockList[address]
+	if value == true {
 		return false
 	}
-	p.LockList[address]=true
+	p.LockList[address] = true
 	return true
 
 }
-func (p*porWorker) ReleaseLock(address common.Address){
-	p.LockList[address]=false
+func (p *porWorker) ReleaseLock(address common.Address) {
+	p.LockList[address] = false
 }
 
 func (p *porWorker) mainLoop() {

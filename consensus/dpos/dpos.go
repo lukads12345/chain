@@ -75,16 +75,32 @@ const (
 	oneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
 	oneGDiv1000           = 1048576            // 1024*1024*1024/1000
 	//todo change rate for mainnet
-	challengeRate           = 10             // One in 10,000  chance of triggering a challenge
+	challengeRate           = 10              // One in 10,000  chance of triggering a challenge
 	maxSeedInt              = int64(1) << 62  // maxSeedInt
 	defaultGasLimit         = uint64(1000000) // default 100w gas limit
-	defaultGasPrice         = int64(100)      // default 100w gas limit
-	challengeInterval       = 4*time.Hour               // default challenge interval
-	punishChallengeInterval = 2*time.Hour
+	defaultGasPrice         = int64(100)      // default 100 gas price
+	challengeInterval       = 4 * time.Hour   // default challenge interval
+	punishChallengeInterval = 2 * time.Hour   // default punish provider challenge interval
+)
+
+const (
+	Running uint8 = iota
+	Punish
+	Pause
+	Stop
+)
+
+const (
+	NotStart uint8 = iota
+	Create
+	Success
+	Fail
 )
 
 var (
-	fourGMem = big.NewInt(4 * 1024 * 1024 * 1024) // 4G memory
+	fourGMem                = big.NewInt(4 * 1024 * 1024 * 1024) // 4G memory
+	challengeProviderMethod = crypto.Keccak256Hash([]byte("challengeProvider(address,uint256,string)")).String()[2:10]
+	challengeFinishMethod   = crypto.Keccak256Hash([]byte("challengeFinish(address,uint256,uint256,uint256,uint8)")).String()[2:10]
 )
 
 type blacklistDirection uint
@@ -411,7 +427,8 @@ func (p *Dpos) IsSystemTransaction(tx *types.Transaction, header *types.Header) 
 	if err != nil {
 		return false, errors.New("UnAuthorized transaction")
 	}
-	if sender == header.Coinbase && isToSystemContract(*tx.To()) && tx.GasPrice().Cmp(big.NewInt(0)) == 0 && !strings.HasPrefix(hex.EncodeToString(tx.Data()), "3fbe464f") && !strings.HasPrefix(hex.EncodeToString(tx.Data()), "9747b38b") {
+
+	if sender == header.Coinbase && isToSystemContract(*tx.To()) && tx.GasPrice().Cmp(big.NewInt(0)) == 0 && !strings.HasPrefix(hex.EncodeToString(tx.Data()), challengeProviderMethod) && !strings.HasPrefix(hex.EncodeToString(tx.Data()), challengeFinishMethod) {
 		return true, nil
 	}
 	return false, nil
@@ -1122,7 +1139,6 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		panic(err)
 	}
 
-
 	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
@@ -1774,7 +1790,7 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	rets := make([]VoteInfo, 0, 0)
 
 	for _, oneProvider := range providers {
-		if oneProvider.Info.State == 2 {
+		if oneProvider.Info.State == Pause {
 			continue
 		}
 		if oneProvider.MarginAmount.Cmp(StakeThreshold) < 0 {
@@ -1857,15 +1873,15 @@ func (p *Dpos) getCanChallengeProviderList(chain consensus.ChainHeaderReader, he
 	punishList := make(map[common.Address]bool, 0)
 	for _, oneProvider := range providers {
 
-		if oneProvider.Info.State == 2 || oneProvider.Info.State == 3 {
+		if oneProvider.Info.State == Pause || oneProvider.Info.State == Stop {
 			continue
 		}
-		if oneProvider.Info.State == 0 {
+		if oneProvider.Info.State == Running {
 			if oneProvider.MarginAmount.Cmp(new(big.Int).Div(new(big.Int).Mul(StakeThreshold, oneProvider.Info.Total.CpuCount), common.Big1000)) < 0 {
 				continue
 			}
 		}
-		if oneProvider.Info.State == 1 {
+		if oneProvider.Info.State == Punish {
 			if oneProvider.MarginAmount.Cmp(common.Big1) < 0 {
 				continue
 			}
@@ -1932,7 +1948,7 @@ func (p *Dpos) whetherCanPor(chain consensus.ChainHeaderReader, header *types.He
 		interval = challengeInterval
 	}
 	challengeInfo := *abi.ConvertType(ret[0], new(providerChallengeInfo)).(*providerChallengeInfo)
-	if time.Now().Sub(time.Unix(challengeInfo.CreateChallengeTime.Int64(), 0)) > interval && challengeInfo.State != 1 {
+	if time.Now().Sub(time.Unix(challengeInfo.CreateChallengeTime.Int64(), 0)) > interval && challengeInfo.State != Create {
 		return true
 	}
 	return false
