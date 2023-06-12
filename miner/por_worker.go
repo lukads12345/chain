@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -75,7 +76,7 @@ type porWorker struct {
 	ChallengeChan chan challengeTask
 	exitCh        chan struct{}
 	FinishCh      *chan ChallengeFinishData
-	LockList      map[common.Address]bool
+	LockList      sync.Map
 }
 
 func (p *porWorker) close() {
@@ -341,7 +342,7 @@ func NewPorWorker(config *Config, chainConfig *params.ChainConfig, engine consen
 		ChallengeChan: make(chan challengeTask, 10),
 		exitCh:        make(chan struct{}),
 		FinishCh:      finishCh,
-		LockList:      make(map[common.Address]bool),
+		LockList:      sync.Map{},
 	}
 	go porWorker.mainLoop()
 	return porWorker
@@ -454,6 +455,10 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 						}
 					}
 				}
+				if (time.Now().Sub(startTime)) > 3*time.Minute {
+					*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
+					break
+				}
 
 			}
 
@@ -467,20 +472,26 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 		}
 	}
 }
-func (p *porWorker) AddLock(address common.Address) bool {
-
-	value, _ := p.LockList[address]
-	if value == true {
-		return false
-	}
-	p.LockList[address] = true
-	return true
+func (p *porWorker) AddLock(address common.Address) {
+	p.LockList.Store(address, true)
 
 }
 func (p *porWorker) ReleaseLock(address common.Address) {
-	p.LockList[address] = false
-}
+	p.LockList.Store(address, false)
 
+}
+func (p *porWorker) CanLock(address common.Address) bool {
+
+	value, ok := p.LockList.Load(address)
+	if ok {
+		if value.(bool) == true {
+			return false
+		}
+	}
+
+	return true
+
+}
 func (p *porWorker) mainLoop() {
 	if queryHeart(p.chain.Config().Dpos.ChallengeCommitUrl) == "" {
 		log.Error("commit url not live,please check url!", "url", p.chain.Config().Dpos.ChallengeCommitUrl)

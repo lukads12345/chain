@@ -118,13 +118,14 @@ var (
 	// 100 native token
 	maxSystemBalance = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
 	//ProviderFactoryAddr = common.Address{}
-	StakeThreshold  = new(big.Int).Mul(big.NewInt(100), big.NewInt(params.Ether))
+	StakeThreshold  = new(big.Int).Mul(big.NewInt(1000), big.NewInt(params.Ether))
 	LuckyRate       = big.NewInt(6)
 	LuckyPorRate    = big.NewInt(4)
 	MaxStorage      = big.NewInt(1)
 	MaxMemory       = big.NewInt(4)
 	systemContracts = map[common.Address]bool{
 		systemcontract.ValidatorFactoryContractAddr: true,
+		systemcontract.ProviderFactoryContractAddr:  true,
 		/*
 			systemcontract.DposFactoryContractAddr: true,
 			systemcontract.AddressListContractAddr: true,
@@ -886,6 +887,9 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	if err := p.tryPunishValidator(chain, header, state); err != nil {
 		return err
 	}
+	if err := p.punishProvider(chain, header, state); err != nil {
+		return err
+	}
 	/*
 		if header.Difficulty.Cmp(diffInTurn) != 0 {
 			if err := p.tryPunishValidator(chain, header, state); err != nil {
@@ -1096,7 +1100,7 @@ func (p *Dpos) TryCreateChallenge(chain consensus.ChainHeaderReader, header *typ
 		//if header.Number.Uint64()%p.config.Epoch == 0 {
 		if header.Number.Uint64()%p.config.Epoch != 0 {
 			if rand.Intn(100000) < challengeRate {
-				chooseProvider, isPunish, err := p.getCanChallengeProviderList(chain, header)
+				chooseProvider, isPunish, err := p.getCanChallengeProvider(chain, header)
 				if err == nil && chooseProvider != nil {
 
 					if p.whetherCanPor(chain, header, *chooseProvider, isPunish) {
@@ -1139,6 +1143,9 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		panic(err)
 	}
 
+	if err := p.punishProvider(chain, header, state); err != nil {
+		panic(err)
+	}
 	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
@@ -1790,10 +1797,10 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	rets := make([]VoteInfo, 0, 0)
 
 	for _, oneProvider := range providers {
-		if oneProvider.Info.State == Pause {
+		if oneProvider.Info.State != Running {
 			continue
 		}
-		if oneProvider.MarginAmount.Cmp(StakeThreshold) < 0 {
+		if oneProvider.MarginAmount.Cmp(new(big.Int).Mul(StakeThreshold, oneProvider.Info.Total.CpuCount)) < 0 {
 			continue
 		}
 
@@ -1818,7 +1825,7 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 }
 
 // call this at every epoch  to get provider list.
-func (p *Dpos) getCanChallengeProviderList(chain consensus.ChainHeaderReader, header *types.Header) (*common.Address, bool, error) {
+func (p *Dpos) getCanChallengeProvider(chain consensus.ChainHeaderReader, header *types.Header) (*common.Address, bool, error) {
 	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
 	var ok = false
 	if parent == nil {
@@ -1994,7 +2001,24 @@ func (p *Dpos) punishValidator(val common.Address, chain consensus.ChainHeaderRe
 
 	return nil
 }
+func (p *Dpos) punishProvider(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
+	method := "tryPunish"
+	punishProvider := common.HexToAddress("0x0000000000000000000000000000000000000000")
+	data, err := p.abi[systemcontract.ProviderFactoryContractName].Pack(method, punishProvider)
+	if err != nil {
+		log.Error("Can't pack data for provider punish", "error", err)
+		return err
+	}
+	// call contract
+	nonce := state.GetNonce(header.Coinbase)
+	msg := types.NewMessage(header.Coinbase, &systemcontract.ProviderFactoryContractAddr, nonce, new(big.Int), math.MaxUint64, new(big.Int), data, nil, true)
+	if _, err := vmcaller.ExecuteMsg(msg, state, header, newChainContext(chain, p), p.chainConfig); err != nil {
+		log.Error("Can't punish provider", "err", err)
+		return err
+	}
 
+	return nil
+}
 func (p *Dpos) chooseChallengeProvider(provider common.Address, seed *big.Int, chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB) error {
 	// method
 
