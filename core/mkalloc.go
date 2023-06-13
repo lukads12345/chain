@@ -76,24 +76,14 @@ func main() {
 		os.Exit(1)
 	}
 	g := new(core.Genesis)
-	//file, err := os.Open(os.Args[1])
-	file, err := os.Open("G:\\purewhite\\chain\\core\\genesis.json")
+	file, err := os.Open(os.Args[1])
+	
 	if err != nil {
 		panic(err)
 	}
 	if err := json.NewDecoder(file).Decode(g); err != nil {
 		panic(err)
 	}
-	cc, err := os.Create("G:\\purewhite\\chain\\core\\mkalloc.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		cc.Close()
-	}()
-	_, err = cc.Write([]byte(makealloc(g)))
-	if err != nil {
-		panic(err)
-	}
-	//fmt.Println("const allocData =", makealloc(g))
+	
+	fmt.Println("const allocData =", makealloc(g))
 }
