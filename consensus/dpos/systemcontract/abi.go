@@ -2359,6 +2359,7 @@ var (
 	ValidatorFactoryAdminAddr    = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
 	AddressListContractName      = "address_list"
 	AddressListContractAddr      = common.HexToAddress("0x000000000000000000000000000000000000c001")
+	AddressListContractAdminAddr = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
 	ValidatorFactoryContractName = "validator_factory"
 	ValidatorFactoryContractAddr = common.HexToAddress("0x000000000000000000000000000000000000c002")
 	ProviderFactoryContractName  = "provider_factory"
