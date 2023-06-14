@@ -318,12 +318,10 @@ func (a Address) Format(s fmt.State, c rune) {
 		if c == 'X' {
 			hex = bytes.ToUpper(hex)
 		}
-		fmt.Println("format x")
 		s.Write(hex)
 	case 'd':
 		fmt.Fprint(s, ([len(a)]byte)(a))
 	default:
-		fmt.Println("format default")
 		fmt.Fprintf(s, "%%!%c(address=%s)", c, a)
 	}
 }
@@ -345,7 +343,6 @@ func (a Address) MarshalText() ([]byte, error) {
 
 // UnmarshalText parses a hash in hex syntax.
 func (a *Address) UnmarshalText(input []byte) error {
-	fmt.Println("Address UnmarshalText", string(input))
 	return hexutil.UnmarshalFixedText("Address", input, a[:])
 	if !IsHexAddress(string(input)) {
 		return errors.New(fmt.Sprintf("invalid address %s", string(input)))
@@ -398,7 +395,6 @@ type UnprefixedAddress Address
 
 // UnmarshalText decodes the address from hex. The 0x prefix is optional.
 func (a *UnprefixedAddress) UnmarshalText(input []byte) error {
-	fmt.Println("(a *UnprefixedAddress) UnmarshalText")
 	return hexutil.UnmarshalFixedUnprefixedText("UnprefixedAddress", input, a[:])
 }
 
@@ -430,7 +426,6 @@ func NewMixedcaseAddressFromString(hexaddr string) (*MixedcaseAddress, error) {
 
 // UnmarshalJSON parses MixedcaseAddress
 func (ma *MixedcaseAddress) UnmarshalJSON(input []byte) error {
-	fmt.Println("mixedcase address UnmarshalJSON")
 	if err := hexutil.UnmarshalFixedJSON(addressT, input, ma.addr[:]); err != nil {
 		return err
 	}
@@ -439,7 +434,6 @@ func (ma *MixedcaseAddress) UnmarshalJSON(input []byte) error {
 
 // MarshalJSON marshals the original value
 func (ma *MixedcaseAddress) MarshalJSON() ([]byte, error) {
-	fmt.Println("mixedcase address MarshalJSON")
 	if strings.HasPrefix(ma.original, "0x") || strings.HasPrefix(ma.original, "0X") {
 		return json.Marshal(fmt.Sprintf("0x%s", ma.original[2:]))
 	}
@@ -453,7 +447,6 @@ func (ma *MixedcaseAddress) Address() Address {
 
 // String implements fmt.Stringer
 func (ma *MixedcaseAddress) String() string {
-	fmt.Println("mixedcase address")
 	if ma.ValidChecksum() {
 		return fmt.Sprintf("%s [chksum ok]", ma.original)
 	}
