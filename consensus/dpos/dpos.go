@@ -1531,7 +1531,9 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 		{systemcontract.ProviderFactoryContractAddr, func() ([]byte, error) {
 			return p.abi[systemcontract.ProviderFactoryContractName].Pack(method, systemcontract.ValidatorFactoryAdminAddr)
 		}},
-
+                {systemcontract.AddressListContractAddr, func() ([]byte, error) {
+			return p.abi[systemcontract.AddressListContractName].Pack(method, systemcontract.AddressListContractAdminAddr)
+		}},
 		/*
 			{systemcontract.PunishV1ContractAddr, func() ([]byte, error) { return p.abi[systemcontract.PunishV1ContractName].Pack(method) }},
 			{systemcontract.SysGovContractAddr, func() ([]byte, error) {
