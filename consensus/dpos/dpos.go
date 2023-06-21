@@ -1531,9 +1531,10 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 		{systemcontract.ProviderFactoryContractAddr, func() ([]byte, error) {
 			return p.abi[systemcontract.ProviderFactoryContractName].Pack(method, systemcontract.ValidatorFactoryAdminAddr)
 		}},
-                {systemcontract.AddressListContractAddr, func() ([]byte, error) {
+		{systemcontract.AddressListContractAddr, func() ([]byte, error) {
 			return p.abi[systemcontract.AddressListContractName].Pack(method, systemcontract.AddressListContractAdminAddr)
 		}},
+
 		/*
 			{systemcontract.PunishV1ContractAddr, func() ([]byte, error) { return p.abi[systemcontract.PunishV1ContractName].Pack(method) }},
 			{systemcontract.SysGovContractAddr, func() ([]byte, error) {
@@ -1886,7 +1887,13 @@ func (p *Dpos) getCanChallengeProvider(chain consensus.ChainHeaderReader, header
 			continue
 		}
 		if oneProvider.Info.State == Running {
-			if oneProvider.MarginAmount.Cmp(new(big.Int).Div(new(big.Int).Mul(StakeThreshold, oneProvider.Info.Total.CpuCount), common.Big1000)) < 0 {
+			handleCpuCount := new(big.Int).Div(oneProvider.Info.Total.CpuCount, common.Big1000)
+			handleMemory := new(big.Int).Div(oneProvider.Info.Total.MemoryCount, fourGMem)
+			handleCount := handleCpuCount
+			if handleMemory.Cmp(handleCpuCount) < 0 {
+				handleCount = handleMemory
+			}
+			if oneProvider.MarginAmount.Cmp(new(big.Int).Mul(StakeThreshold, handleCount)) < 0 {
 				continue
 			}
 		}
