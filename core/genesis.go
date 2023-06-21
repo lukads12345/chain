@@ -143,10 +143,10 @@ func (e *GenesisMismatchError) Error() string {
 // SetupGenesisBlock writes or updates the genesis block in db.
 // The block that will be used is:
 //
-//                          genesis == nil       genesis != nil
-//                       +------------------------------------------
-//     db has no genesis |  main-net default  |  genesis
-//     db has genesis    |  from DB           |  genesis (if compatible)
+//	                     genesis == nil       genesis != nil
+//	                  +------------------------------------------
+//	db has no genesis |  main-net default  |  genesis
+//	db has genesis    |  from DB           |  genesis (if compatible)
 //
 // The stored chain configuration will be updated if it is compatible (i.e. does not
 // specify a fork block below the local head block). In case of a conflict, the
@@ -344,7 +344,7 @@ func DefaultGenesisBlock() *Genesis {
 		Config:     params.MainnetChainConfig,
 		Nonce:      0,
 		Timestamp:  0x5fc58968,
-		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000e9f0b3bd1dc6c7b45cc79e25fc137ad4cc458f6773c20c4b7aae3d19eb66decf4b53e4b4cd1bf57a9da829429c3b4ca01b124f5459aa02e16ede4193ddf0b34dc25afc45d73daaee709837ee3286f0320000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000e9f0b3bd1dc6c7b45cc79e25fc137ad4cc458f6773c20c4b7aae3d19eb66decf4b53e4b4cd1bf57a9da829429c3b4ca01b124f5459aa02e16ede4193ddf0b34dc25afc45d73daaee709837ee3286f032f5c62635a788a9d6259c75a93f1a66d6e44276d90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
 		GasLimit:   0x280de80,
 		Difficulty: big.NewInt(1),
 		Alloc:      decodePrealloc(mainnetAllocData),

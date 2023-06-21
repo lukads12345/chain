@@ -64,16 +64,17 @@ const (
 	wiggleTime           = uint64(1) // second, Random delay (per signer) to allow concurrent signers
 	initialBackOffTime   = uint64(1) // second
 
-	systemRewardPercent   = 4                  // it means 1/2^4 = 1/16 percentage of gas fee incoming will be distributed to system
-	inmemoryBlacklist     = 21                 // Number of recent blacklist snapshots to keep in memory
-	allPercent            = 10000              // Number of all distribute percent
-	doubleAllPercent      = 20000              // Number of all distribute percent
-	distributeRound       = 100                // Number of distribute round
-	doubleDistributeRound = 200                // Double Number of distribute round
-	blockDistributeRewrad = 61969993482        // one block origin reward
-	yearBlockCount        = 24 * 60 * 365 * 10 // one year generate block count
-	oneTDiv1000           = 1073741824         // 1024*1024*1024*1024/1000
-	oneGDiv1000           = 1048576            // 1024*1024*1024/1000
+	systemRewardPercent   = 4           // it means 1/2^4 = 1/16 percentage of gas fee incoming will be distributed to system
+	inmemoryBlacklist     = 21          // Number of recent blacklist snapshots to keep in memory
+	allPercent            = 10000       // Number of all distribute percent
+	doubleAllPercent      = 20000       // Number of all distribute percent
+	distributeRound       = 100         // Number of distribute round
+	doubleDistributeRound = 200         // Double Number of distribute round
+	blockDistributeRewrad = 61969993482 // one block origin reward
+	//todo change year blockCount for mainnet
+	yearBlockCount = 24 * 60 * 10 // one year generate block count
+	oneTDiv1000    = 1073741824   // 1024*1024*1024*1024/1000
+	oneGDiv1000    = 1048576      // 1024*1024*1024/1000
 	//todo change rate for mainnet
 	challengeRate           = 10              // One in 10,000  chance of triggering a challenge
 	maxSeedInt              = int64(1) << 62  // maxSeedInt
