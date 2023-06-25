@@ -1804,7 +1804,13 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 		if oneProvider.Info.State != Running {
 			continue
 		}
-		if oneProvider.MarginAmount.Cmp(new(big.Int).Mul(StakeThreshold, oneProvider.Info.Total.CpuCount)) < 0 {
+		handleCpuCount := new(big.Int).Div(oneProvider.Info.Total.CpuCount, common.Big1000)
+		handleMemory := new(big.Int).Div(oneProvider.Info.Total.MemoryCount, fourGMem)
+		handleCount := handleCpuCount
+		if handleMemory.Cmp(handleCpuCount) < 0 {
+			handleCount = handleMemory
+		}
+		if oneProvider.MarginAmount.Cmp(new(big.Int).Mul(StakeThreshold, handleCount)) < 0 {
 			continue
 		}
 
