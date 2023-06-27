@@ -1025,7 +1025,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		// Create por challenge transaction
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
 			nonceDiff := uint64(0)
-			if w.porWork.CanLock(header.Coinbase) && len(w.challengeCh) == 0 {
+			if w.porWork.CanLock(header.Coinbase) && len(w.challengeCh) == 0 &&len(w.eth.TxPool().Locals())==0  {
 				tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
 
 				if err == nil {
