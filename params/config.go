@@ -68,7 +68,7 @@ var (
 		RedCoastBlock:       big.NewInt(22222222220),
 		//Ethash:              new(EthashConfig),
 		Dpos: &DposConfig{
-			Period: 2,
+			Period: 6,
 			Epoch:  200,
 		},
 	}
@@ -94,7 +94,7 @@ var (
 		RedCoastBlock:       big.NewInt(2),
 		//Ethash:              new(EthashConfig),
 		Dpos: &DposConfig{
-			Period: 2,
+			Period: 6,
 			Epoch:  200,
 		},
 	}
