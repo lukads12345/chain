@@ -2356,15 +2356,17 @@ var (
 		// SysGovToAddr is the To address for the system governance transaction, NOT contract address
 		SysGovToAddr = common.HexToAddress("0x000000000000000000000000000000000000cccc")
 	*/
-	ValidatorFactoryAdminAddr    = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
-	AddressListContractName      = "address_list"
-	AddressListContractAddr      = common.HexToAddress("0x000000000000000000000000000000000000c001")
-	AddressListContractAdminAddr = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
-	ValidatorFactoryContractName = "validator_factory"
-	ValidatorFactoryContractAddr = common.HexToAddress("0x000000000000000000000000000000000000c002")
-	ProviderFactoryContractName  = "provider_factory"
-	ProviderFactoryContractAddr  = common.HexToAddress("0x000000000000000000000000000000000000C003")
-	abiMap                       map[string]abi.ABI
+	ValidatorFactoryAdminAddr      = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
+	AddressListContractName        = "address_list"
+	AddressListContractAddr        = common.HexToAddress("0x000000000000000000000000000000000000c001")
+	AddressListContractAdminAddr   = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
+	ValidatorFactoryContractName   = "validator_factory"
+	ValidatorFactoryContractAddr   = common.HexToAddress("0x000000000000000000000000000000000000c002")
+	ProviderFactoryContractName    = "provider_factory"
+	ProviderFactoryContractAddr    = common.HexToAddress("0x000000000000000000000000000000000000C003")
+	ValidatorFactoryPunishItemAddr = common.HexToHash("0x00q0000000000000000000000000000000000c004")
+	ProviderFactoryPunishItemAddr  = common.HexToHash("0x000000000000000000000000000000000000C005")
+	abiMap                         map[string]abi.ABI
 )
 
 func init() {
