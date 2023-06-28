@@ -1892,10 +1892,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		substart := time.Now()
 
 		receipts, logs, usedGas, err := bc.processor.Process(block, statedb, bc.vmConfig)
-		if block.Transactions().Len() > 0 {
-			tttt, _ := block.Transactions()[0].MarshalJSON()
-			
-		}
+		
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			return it.index, err
