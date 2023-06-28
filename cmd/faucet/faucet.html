@@ -105,7 +105,7 @@
 				<h1 style="text-align: center;">UBIC FAUCET</h1>
 			</div>
 			<div class="content">
-				<div style="margin-bottom: 30px;">Fast and reliable. 1 test UBIC/day.</div>
+				<div style="margin-bottom: 30px;">Fast and reliable. 0.5 test UBIC/day.</div>
 				<div style="margin: 0 auto;">
 					<div style="margin-bottom: 10px;">Wallet Address</div>
 					<input id="url" name="url" type="text" class="form-control"
@@ -115,7 +115,7 @@
 					Once you tweet with your address with the drip faucet URL and tell us where to find the tweet,you will get the
 					<span style="color: #4060E3;">test UBIC</span>.
 				</div>
-				<div style="margin-bottom: 24px;text-decoration: underline;">
+				<!-- <div style="margin-bottom: 24px;text-decoration: underline;">
 					<a style="font-size: 14px;" onclick="openTwitterUrl()">Generate the tweet for me and I'll
 						share!</a>
 				</div>
@@ -125,7 +125,7 @@
 						<input id="tweetUrl" name="tweetUrl" type="text" class="form-control"
 							placeholder="Please input your tweet URL.">
 					</div>
-				</div>
+				</div> -->
 				<div style="margin-bottom: 34px;display: flex;justify-content: center;align-items: center;"
 					id="recaptcha_element"></div>
 				<div style="text-align: center;">
@@ -180,15 +180,26 @@
 
 		// Define the function that submits a gist url to the server
 		var submit = function () {
-			var twitterUrl = $("#tweetUrl")[0].value
+			// var twitterUrl = $("#tweetUrl")[0].value
 
-			if (!!twitterUrl) {
+			// if (!!twitterUrl) {
+			// 	server.send(JSON.stringify({
+			// 		url: twitterUrl, symbol, tier, captcha
+			// 	}));
+			// 	hcaptcha.reset();
+			// } else {
+			// 	noty({ layout: 'topCenter', text: 'Empty twitter URL!', type: 'error', timeout: 500, progressBar: true });
+			// }
+
+			var address = $("#url")[0].value
+
+			if (address.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
 				server.send(JSON.stringify({
-					url: twitterUrl, symbol, tier, captcha
+					url: address, symbol, tier, captcha
 				}));
 				hcaptcha.reset();
 			} else {
-				noty({ layout: 'topCenter', text: 'Empty twitter URL!', type: 'error', timeout: 500, progressBar: true });
+				noty({ layout: 'topCenter', text: 'Invalid address!', type: 'error', timeout: 500, progressBar: true });
 			}
 		};
 
