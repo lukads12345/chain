@@ -16,12 +16,17 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.owner }}/geth
-  ALLTOOLS_IMAGE_NAME: ${{ github.owner }}/alltools
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - image: geth
+            file: Dockerfile
+          - image: alltools
+            file: Dockerfile.alltools
     steps:
       - uses: actions/checkout@v3
 
@@ -41,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service.image }}
           flavor: |
             latest=auto
           tags: |
@@ -49,33 +54,11 @@ jobs:
             type=ref,event=tag
             type=sha,prefix=,format=long,enable=true,priority=100
 
-      - name: (geth) Build and push Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.ALLTOOLS_IMAGE_NAME }}
-          flavor: |
-            latest=auto
-          tags: |
-            type=schedule
-            type=ref,event=tag
-            type=sha,prefix=,format=long,enable=true,priority=100
-
-      - name: (alltools) Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile.alltools
+          file: ${{ matrix.service.file }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
