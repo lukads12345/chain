@@ -16,11 +16,17 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - image: geth
+            file: Dockerfile
+          - image: alltools
+            file: Dockerfile.alltools
     steps:
       - uses: actions/checkout@v3
 
@@ -40,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service.image }}
           flavor: |
             latest=auto
           tags: |
@@ -52,6 +58,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          file: ${{ matrix.service.file }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

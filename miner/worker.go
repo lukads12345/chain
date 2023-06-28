@@ -1025,12 +1025,14 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		// Create por challenge transaction
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
 			nonceDiff := uint64(0)
+
 			// Fill the block with all available pending transactions.
 			tPending, err := w.eth.TxPool().Pending()
 			if err != nil {
 				log.Error("Failed to fetch pending transactions", "err", err)
 			}
 			if w.porWork.CanLock(header.Coinbase) && len(w.challengeCh) == 0 && len(tPending[header.Coinbase]) == 0 {
+
 				tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
 
 				if err == nil {
