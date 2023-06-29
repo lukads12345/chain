@@ -104,9 +104,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		msg, err := tx.AsMessage(signer)
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
-		fmt.Println("usedGas1------>", usedGas)
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
-		fmt.Println("usedGas2------>", usedGas)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
