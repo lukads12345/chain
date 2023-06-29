@@ -157,7 +157,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		bloomRequests:     make(chan chan *bloombits.Retrieval),
 		bloomIndexer:      core.NewBloomIndexer(chainDb, params.BloomBitsBlocks, params.BloomConfirms),
 		p2pServer:         stack.Server(),
-		posEtherbase:      append(make([]common.Address, len(config.Miner.PosEtherbase)), config.Miner.PosEtherbase...),
+		posEtherbase:      append(make([]common.Address, 0), config.Miner.PosEtherbase...),
 	}
 
 	eth.APIBackend = &EthAPIBackend{stack.Config().ExtRPCEnabled(), stack.Config().AllowUnprotectedTxs, eth, nil}
