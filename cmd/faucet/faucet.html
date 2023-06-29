@@ -132,6 +132,7 @@
 					<button style="max-width: 100%;width: 664px;height: 47px;" type="button" onclick="submit()">Send Me Test
 						UBIC</button>
 				</div>
+				<div id="time_left_tip" style="color: red;">Please collect the UBIC token tomorrow. lt has been less than <span style="color: #4060E3;" id="time_left"></span> since the last collection.</div>
 			</div>
 		</div>
 	</div>
@@ -226,9 +227,12 @@
 					$("#block").text(parseInt(msg.number, 16));
 				}
 				if (msg.error !== undefined) {
+					$("#time_left_tip").show()
+					$("#time_left").text(msg.error)
 					noty({ layout: 'topCenter', text: msg.error, type: 'error', timeout: 5000, progressBar: true });
 				}
 				if (msg.success !== undefined) {
+					$("#time_left_tip").hide()
 					noty({ layout: 'topCenter', text: msg.success, type: 'success', timeout: 5000, progressBar: true });
 				}
 				if (msg.requests !== undefined && msg.requests !== null) {
