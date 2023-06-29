@@ -366,9 +366,19 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Start tracking the connection and drop at the end
 	defer conn.Close()
-	ipsStr := r.Header.Get("X-Forwarded-For")
-	fmt.Println(ipsStr)
-	ips := strings.Split(ipsStr, ",")
+	list := []string{"X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "X-Real-IP"}
+	var ips []string
+	for _, one_header := range list {
+		ipsStr := r.Header.Get(one_header)
+		fmt.Println(ipsStr)
+		ips = strings.Split(ipsStr, ",")
+		if len(ips) >= 2 {
+			break
+		}
+	}
+	//ipsStr := r.Header.Get("X-Forwarded-For")
+	//fmt.Println(ipsStr)
+	//ips := strings.Split(ipsStr, ",")
 
 	if len(ips) < 2 {
 		ips = []string{"", "127.0.0.1"}
