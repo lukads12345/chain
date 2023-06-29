@@ -370,9 +370,10 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 	var ips []string
 	for _, one_header := range list {
 		ipsStr := r.Header.Get(one_header)
-		fmt.Println(ipsStr)
+
 		ips = strings.Split(ipsStr, ",")
-		if len(ips) >= 2 {
+		if len(ips) > 0 {
+			ips = append(ips, "")
 			break
 		}
 	}
