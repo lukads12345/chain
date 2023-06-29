@@ -126,13 +126,13 @@
 							placeholder="Please input your tweet URL.">
 					</div>
 				</div> -->
-				<div style="margin-bottom: 34px;margin-top:24px;display: flex;justify-content: center;align-items: center;"
+				<div style="margin: 34px 0;display: flex;justify-content: center;align-items: center;"
 					id="recaptcha_element"></div>
 				<div style="text-align: center;">
 					<button style="max-width: 100%;width: 664px;height: 47px;" type="button" onclick="submit()">Send Me Test
 						UBIC</button>
 				</div>
-				<div id="time_left_tip" style="color: red;">Please collect the UBIC token tomorrow. lt has been less than <span style="color: #4060E3;" id="time_left"></span> since the last collection.</div>
+				<div id="time_left_tip" style="color: red;display: none;">Please collect the UBIC token tomorrow. lt has been less than <span style="color: #4060E3;" id="time_left"></span> since the last collection.</div>
 			</div>
 		</div>
 	</div>
@@ -228,12 +228,12 @@
 				}
 				if (msg.error !== undefined) {
 					$("#time_left_tip").show()
-					$("#time_left").text(msg.error)
+					$("#time_left").text(msg.error.split(' left until next allowance')[0])
 					noty({ layout: 'topCenter', text: msg.error, type: 'error', timeout: 5000, progressBar: true });
 				}
 				if (msg.success !== undefined) {
 					$("#time_left_tip").hide()
-					noty({ layout: 'topCenter', text: msg.success, type: 'success', timeout: 5000, progressBar: true });
+					noty({ layout: 'topCenter', text: msg.success, type: 'success', timeout: 10000, progressBar: true });
 				}
 				if (msg.requests !== undefined && msg.requests !== null) {
 					// Mark all previous requests missing as done
