@@ -111,10 +111,10 @@
 					<input id="url" name="url" type="text" class="form-control"
 						placeholder="Please input your ETH wallet address.">
 				</div>
-<!--				<div style="font-size: 14px;margin: 10px 0 24px;">-->
-<!--					Once you tweet with your address with the drip faucet URL and tell us where to find the tweet,you will get the-->
-<!--					<span style="color: #4060E3;">test UBIC</span>.-->
-<!--				</div>-->
+				<!--				<div style="font-size: 14px;margin: 10px 0 24px;">-->
+				<!--					Once you tweet with your address with the drip faucet URL and tell us where to find the tweet,you will get the-->
+				<!--					<span style="color: #4060E3;">test UBIC</span>.-->
+				<!--				</div>-->
 				<!-- <div style="margin-bottom: 24px;text-decoration: underline;">
 					<a style="font-size: 14px;" onclick="openTwitterUrl()">Generate the tweet for me and I'll
 						share!</a>
@@ -126,13 +126,15 @@
 							placeholder="Please input your tweet URL.">
 					</div>
 				</div> -->
-				<div style="margin: 34px 0;display: flex;justify-content: center;align-items: center;"
-					id="recaptcha_element"></div>
+				<div style="margin: 34px 0;display: flex;justify-content: center;align-items: center;" id="recaptcha_element">
+				</div>
 				<div style="text-align: center;">
 					<button style="max-width: 100%;width: 664px;height: 47px;" type="button" onclick="submit()">Send Me Test
 						UBIC</button>
 				</div>
-				<div id="time_left_tip" style="font-size: 14px;color: red;margin-top: 8px;text-align: center;display: none;">Please collect the UBIC token tomorrow. lt has been less than <span style="color: #4060E3;" id="time_left"></span> since the last collection.</div>
+				<div id="time_left_tip" style="font-size: 14px;color: red;margin-top: 8px;text-align: center;display: none;">
+					Please collect the UBIC token tomorrow. lt has been less than <span style="color: #4060E3;"
+						id="time_left"></span> since the last collection.</div>
 			</div>
 		</div>
 	</div>
@@ -233,7 +235,8 @@
 				}
 				if (msg.success !== undefined) {
 					$("#time_left_tip").hide()
-					noty({ layout: 'topCenter', text: msg.success, type: 'success', timeout: 10000, progressBar: true });
+					const _msg = '<span style="word-break: break-all;">' + msg.success + "<span/>"
+					noty({ layout: 'topCenter', text: _msg, type: 'success', timeout: 10000, progressBar: true });
 				}
 				if (msg.requests !== undefined && msg.requests !== null) {
 					// Mark all previous requests missing as done
