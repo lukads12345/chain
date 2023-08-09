@@ -985,7 +985,7 @@ func authFacebook(url string) (string, string, common.Address, error) {
 // Byzantine attack, so only ever use for truly private networks.
 func authNoAuth(url string) (string, string, common.Address, error) {
 	var address common.Address
-	if strings.HasPrefix(url, "U4") {
+	if strings.HasPrefix(url, "I4") {
 		address = common.HexToAddress(url)
 	}
 	address = common.HexToAddress(regexp.MustCompile("0x[0-9a-fA-F]{40}").FindString(url))
