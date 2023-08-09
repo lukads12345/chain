@@ -2344,7 +2344,7 @@ const DevMappingPosition = 2
 
 var (
 	/*
-		FactoryAdminAddr        = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
+		FactoryAdminAddr        = common.HexToAddress("0x7a0BbA5EEbD9B84F46A39A9ffd488b8afB88979d")
 		SysGovContractName      = "governance"
 		AddressListContractName = "address_list"
 		DposFactoryContractName = "dpos_factory"
@@ -2356,10 +2356,10 @@ var (
 		// SysGovToAddr is the To address for the system governance transaction, NOT contract address
 		SysGovToAddr = common.HexToAddress("0x000000000000000000000000000000000000cccc")
 	*/
-	ValidatorFactoryAdminAddr      = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
+	ValidatorFactoryAdminAddr      = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
 	AddressListContractName        = "address_list"
 	AddressListContractAddr        = common.HexToAddress("0x000000000000000000000000000000000000c001")
-	AddressListContractAdminAddr   = common.HexToAddress("0xce930537a2148B8DC43899ff2E9BcBEE0e801c54")
+	AddressListContractAdminAddr   = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
 	ValidatorFactoryContractName   = "validator_factory"
 	ValidatorFactoryContractAddr   = common.HexToAddress("0x000000000000000000000000000000000000c002")
 	ProviderFactoryContractName    = "provider_factory"
