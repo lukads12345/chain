@@ -29,6 +29,7 @@ import (
 var (
 	MainnetGenesisHash = common.HexToHash("0x124a96de763fa3eb43b4cf5e813cd64b881bba88176ac179fb1125ef0da37690")
 	TestnetGenesisHash = common.HexToHash("0x00ddd8230d6e2fbc257d9c10d87b5312e7a34c13165d2b2170fbdbcbdff8b0bc")
+	DevnetGenesisHash  = common.HexToHash("0xfa7b620726816b0c3d7e953c46c51f2bb4b1c9839092d1f9ace3b72883b0a356")
 )
 
 // TrustedCheckpoints associates each known checkpoint with the genesis hash of
@@ -92,6 +93,31 @@ var (
 		MirrorSyncBlock:     big.NewInt(0),
 		BerlinBlock:         big.NewInt(37000),
 		RedCoastBlock:       big.NewInt(2),
+		//Ethash:              new(EthashConfig),
+		Dpos: &DposConfig{
+			Period: 6,
+			Epoch:  200,
+		},
+	}
+	DevnetChainConfig = &ChainConfig{
+		ChainID:        big.NewInt(237),
+		HomesteadBlock: big.NewInt(0),
+		DAOForkBlock:   big.NewInt(0),
+		DAOForkSupport: true,
+		EIP150Block:    big.NewInt(0),
+		//EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
+		EIP155Block:         big.NewInt(0),
+		EIP158Block:         big.NewInt(0),
+		ByzantiumBlock:      big.NewInt(0),
+		ConstantinopleBlock: big.NewInt(0),
+		PetersburgBlock:     big.NewInt(0),
+		IstanbulBlock:       big.NewInt(0),
+		MuirGlacierBlock:    big.NewInt(0),
+		RamanujanBlock:      big.NewInt(0),
+		NielsBlock:          big.NewInt(0),
+		MirrorSyncBlock:     big.NewInt(0),
+		BerlinBlock:         big.NewInt(4),
+		RedCoastBlock:       big.NewInt(22222222220),
 		//Ethash:              new(EthashConfig),
 		Dpos: &DposConfig{
 			Period: 6,

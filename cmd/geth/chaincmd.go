@@ -83,6 +83,7 @@ It expects the genesis file as argument.`,
 		Flags: []cli.Flag{
 			utils.MainnetFlag,
 			utils.TestnetFlag,
+			utils.DevnetFlag,
 		},
 		Category: "BLOCKCHAIN COMMANDS",
 		Description: `

@@ -249,6 +249,9 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return params.MainnetChainConfig
 	case ghash == params.TestnetGenesisHash:
 		return params.TestnetChainConfig
+	case ghash == params.DevnetGenesisHash:
+		return params.DevnetChainConfig
+
 	//case ghash == params.TestnetGenesisHash:
 	//	return params.TestnetChainConfig
 	default:
@@ -359,6 +362,16 @@ func DefaultTestnetGenesisBlock() *Genesis {
 		GasLimit:   0x280de80,
 		Difficulty: big.NewInt(1),
 		Alloc:      decodePrealloc(testnetAllocData),
+	}
+}
+func DefaultDevnetGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.DevnetChainConfig,
+		Timestamp:  0x5fc58968,
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000aacac4f5763dfb214a84f93e76595f3ca578b10d8d35f95ee6c8b6ee68629d89e8ec330439027682e1303e4f300aea48a642cb680115f08060baac8415eff34389eb6cb5dfaac6439358e77db0aea3677c3d6c3ea68aa16e3681c2074ce1b74b38f08c8e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+		GasLimit:   0x280de80,
+		Difficulty: big.NewInt(1),
+		Alloc:      decodePrealloc(devnetAllocData),
 	}
 }
 

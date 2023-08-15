@@ -140,6 +140,7 @@ var (
 		utils.DNSDiscoveryFlag,
 		utils.MainnetFlag,
 		utils.TestnetFlag,
+		utils.DevnetFlag,
 		utils.DeveloperFlag,
 		utils.DeveloperPeriodFlag,
 		utils.VMEnableDebugFlag,

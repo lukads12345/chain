@@ -444,9 +444,7 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 							if rootHash != nil {
 								*p.FinishCh <- ChallengeFinishData{challengeState: Success, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: uint64(challengeRes.ChallengeCount), rootHash: rootHash, Validator: challenge.Validator}
 							} else {
-
 								*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
-
 							}
 							break
 						} else {
@@ -459,9 +457,7 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 					*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 					break
 				}
-
 			}
-
 			if (time.Now().Sub(startTime)) > 7*time.Minute {
 				// not response
 

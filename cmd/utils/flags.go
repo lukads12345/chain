@@ -159,6 +159,10 @@ var (
 		Name:  "testnet",
 		Usage: "Ethereum testnet",
 	}
+	DevnetFlag = cli.BoolFlag{
+		Name:  "devnet",
+		Usage: "Ethereum devnet",
+	}
 
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
@@ -878,6 +882,9 @@ func setBootstrapNodes(ctx *cli.Context, cfg *p2p.Config) {
 	//	urls = params.YoloV3Bootnodes
 	case ctx.GlobalBool(TestnetFlag.Name):
 		urls = params.TestnetBootnodes
+	case ctx.GlobalBool(DevnetFlag.Name):
+		urls = params.DevnetBootnodes
+
 	case cfg.BootstrapNodes != nil:
 		return // already set, don't apply defaults.
 	}
@@ -1522,7 +1529,7 @@ func CheckExclusive(ctx *cli.Context, args ...interface{}) {
 // SetEthConfig applies eth-related command line flags to the config.
 func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	// Avoid conflicting network flags
-	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, TestnetFlag)
+	CheckExclusive(ctx, MainnetFlag, DeveloperFlag, TestnetFlag, DevnetFlag)
 	CheckExclusive(ctx, LightServeFlag, SyncModeFlag, "light")
 	CheckExclusive(ctx, DeveloperFlag, ExternalSignerFlag) // Can't use both ephemeral unlocked and external signer
 	if ctx.GlobalString(GCModeFlag.Name) == "archive" && ctx.GlobalUint64(TxLookupLimitFlag.Name) != 0 {
@@ -1688,6 +1695,13 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		}
 		cfg.Genesis = core.DefaultTestnetGenesisBlock()
 		SetDNSDiscoveryDefaults(cfg, params.TestnetGenesisHash)
+	case ctx.GlobalBool(DevnetFlag.Name):
+		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
+			cfg.NetworkId = 1
+		}
+		cfg.Genesis = core.DefaultDevnetGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.DevnetGenesisHash)
+
 	//case ctx.GlobalBool(RopstenFlag.Name):
 	//	if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 	//		cfg.NetworkId = 3
@@ -1897,6 +1911,9 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 		genesis = core.DefaultGenesisBlock()
 	case ctx.GlobalBool(TestnetFlag.Name):
 		genesis = core.DefaultTestnetGenesisBlock()
+	case ctx.GlobalBool(DevnetFlag.Name):
+		genesis = core.DefaultDevnetGenesisBlock()
+
 	//case ctx.GlobalBool(RopstenFlag.Name):
 	//	genesis = core.DefaultRopstenGenesisBlock()
 	//case ctx.GlobalBool(RinkebyFlag.Name):

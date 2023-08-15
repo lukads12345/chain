@@ -32,6 +32,12 @@ var TestnetBootnodes = []string{
 	"enode://8d7e62fee7e364f308dedfd0a3a71c68ffc41e3abdf7be2eb7e0ae05291e0f709db33c292fa39a0b7648fa4dc33573b7141df26b2d828482d6a5e6baca353c81@bootnode1.testnet.ubicloud.io:30301",
 	"enode://ded15ac04a75a8c08be778437f2f8ac3a4f5bf636b05b2ee76b1a9e0ccc7b2034606c104e0b5e3b59f345fac9c27b70a91a0be3368e96b8f8ad0d0923b27bafd@bootnode2.testnet.ubicloud.io:30301",
 }
+var DevnetBootnodes = []string{
+	// Ethereum Foundation Go Bootnodes
+	"enode://5b609e290c4c2d408c36eff0f2e5cbb7bd43339c5dc27259b122449c901420fda33c83670c0a51d1f40adbe38a18ea66c097a7a0f30b619d44c050e6e7c34feb@104.196.124.80:30301",
+	"enode://b04e54ff785ddfbca7309f66283f035dcf5388959e7a92235e2b4a0d1f721da10c773c94eef60e09c69b8caab2cce402a6539eab3c2af44bb1bbb4908ad7b178@104.196.55.206:30301",
+	"enode://be431192987395f9f5455733fe806f71c4cf7ea8bc6612451433b409dd600b654921019d505887f9d9a5ac60d6612d37c7189c5117dc46a1c23f44ca634f7c3a@35.231.70.253:30301",
+}
 
 // RopstenBootnodes are the enode URLs of the P2P bootstrap nodes running on the
 // Ropsten test network.
