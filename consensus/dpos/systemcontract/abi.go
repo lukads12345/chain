@@ -2356,16 +2356,23 @@ var (
 		// SysGovToAddr is the To address for the system governance transaction, NOT contract address
 		SysGovToAddr = common.HexToAddress("0x000000000000000000000000000000000000cccc")
 	*/
-	ValidatorFactoryAdminAddr      = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
-	AddressListContractName        = "address_list"
-	AddressListContractAddr        = common.HexToAddress("0x000000000000000000000000000000000000c001")
-	AddressListContractAdminAddr   = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+	ValidatorFactoryAdminAddr     = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+	ValidatorFactoryTestAdminAddr = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+	ValidatorFactoryDevAdminAddr  = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+
+	AddressListContractName = "address_list"
+	AddressListContractAddr = common.HexToAddress("0x000000000000000000000000000000000000c001")
+
+	AddressListContractAdminAddr     = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+	AddressListTestContractAdminAddr = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+	AddressListDevContractAdminAddr  = common.HexToAddress("0x2b9ac060e7d20cf91bbb6719178d957f9c441235")
+
 	ValidatorFactoryContractName   = "validator_factory"
 	ValidatorFactoryContractAddr   = common.HexToAddress("0x000000000000000000000000000000000000c002")
 	ProviderFactoryContractName    = "provider_factory"
 	ProviderFactoryContractAddr    = common.HexToAddress("0x000000000000000000000000000000000000C003")
-	ValidatorFactoryPunishItemAddr = common.HexToHash("0x00q0000000000000000000000000000000000c004")
-	ProviderFactoryPunishItemAddr  = common.HexToHash("0x000000000000000000000000000000000000C005")
+	ValidatorFactoryPunishItemAddr = common.HexToAddress("0x000000000000000000000000000000000000c004")
+	ProviderFactoryPunishItemAddr  = common.HexToAddress("0x000000000000000000000000000000000000C005")
 	abiMap                         map[string]abi.ABI
 )
 
@@ -2396,7 +2403,28 @@ func GetInteractiveABI() map[string]abi.ABI {
 
 	return abiMap
 }
-
+func GetValidatorAdmin(chainId *big.Int) common.Address {
+	if chainId.Cmp(params.MainnetChainConfig.ChainID) == 0 {
+		return ValidatorFactoryAdminAddr
+	} else if chainId.Cmp(params.TestnetChainConfig.ChainID) == 0 {
+		return ValidatorFactoryTestAdminAddr
+	} else if chainId.Cmp(params.DevnetChainConfig.ChainID) == 0 {
+		return ValidatorFactoryDevAdminAddr
+	} else {
+		return ValidatorFactoryAdminAddr
+	}
+}
+func GetAddressListAdmin(chainId *big.Int) common.Address {
+	if chainId.Cmp(params.MainnetChainConfig.ChainID) == 0 {
+		return AddressListContractAdminAddr
+	} else if chainId.Cmp(params.TestnetChainConfig.ChainID) == 0 {
+		return AddressListTestContractAdminAddr
+	} else if chainId.Cmp(params.DevnetChainConfig.ChainID) == 0 {
+		return AddressListDevContractAdminAddr
+	} else {
+		return AddressListContractAdminAddr
+	}
+}
 func GetValidatorAddr(blockNum *big.Int, config *params.ChainConfig) *common.Address {
 	if config.IsRedCoast(blockNum) {
 		return &ValidatorFactoryContractAddr
