@@ -152,16 +152,19 @@ var (
 		Value: ethconfig.Defaults.NetworkId,
 	}
 	MainnetFlag = cli.BoolFlag{
-		Name:  "mainnet",
-		Usage: "Ethereum mainnet",
+		Name:   "mainnet",
+		Usage:  "Ethereum mainnet",
+		EnvVar: "MAINNET",
 	}
 	TestnetFlag = cli.BoolFlag{
-		Name:  "testnet",
-		Usage: "Ethereum testnet",
+		Name:   "testnet",
+		Usage:  "Ethereum testnet",
+		EnvVar: "TESTNET",
 	}
 	DevnetFlag = cli.BoolFlag{
-		Name:  "devnet",
-		Usage: "Ethereum devnet",
+		Name:   "devnet",
+		Usage:  "Ethereum devnet",
+		EnvVar: "DEVNET",
 	}
 
 	DeveloperFlag = cli.BoolFlag{

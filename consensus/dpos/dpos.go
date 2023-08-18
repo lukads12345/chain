@@ -1562,13 +1562,13 @@ func (p *Dpos) initializeSystemContracts(chain consensus.ChainHeaderReader, head
 
 		{systemcontract.ValidatorFactoryContractAddr, func() ([]byte, error) {
 
-			return p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, genesisValidators, systemcontract.ValidatorFactoryAdminAddr)
+			return p.abi[systemcontract.ValidatorFactoryContractName].Pack(method, genesisValidators, systemcontract.GetValidatorAdmin(p.chainConfig.ChainID))
 		}},
 		{systemcontract.ProviderFactoryContractAddr, func() ([]byte, error) {
-			return p.abi[systemcontract.ProviderFactoryContractName].Pack(method, systemcontract.ValidatorFactoryAdminAddr)
+			return p.abi[systemcontract.ProviderFactoryContractName].Pack(method, systemcontract.GetValidatorAdmin(p.chainConfig.ChainID))
 		}},
 		{systemcontract.AddressListContractAddr, func() ([]byte, error) {
-			return p.abi[systemcontract.AddressListContractName].Pack(method, systemcontract.AddressListContractAdminAddr)
+			return p.abi[systemcontract.AddressListContractName].Pack(method, systemcontract.GetAddressListAdmin(p.chainConfig.ChainID))
 		}},
 
 		/*
@@ -2417,7 +2417,8 @@ func (p *Dpos) ValidateTx(tx *types.Transaction, header *types.Header, parentSta
 		m[systemcontract.ProviderFactoryContractAddr] = DirectionTo
 		m[systemcontract.ValidatorFactoryContractAddr] = DirectionTo
 		m[systemcontract.AddressListContractAddr] = DirectionTo
-		m[systemcontract.ValidatorFactoryAdminAddr] = DirectionTo
+		m[systemcontract.GetValidatorAdmin(p.chainConfig.ChainID)] = DirectionTo
+		m[systemcontract.GetAddressListAdmin(p.chainConfig.ChainID)] = DirectionTo
 		//if _, exist := m[from]; (!exist) {
 		//	return errors.New("address denied")
 		//}
