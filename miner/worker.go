@@ -1033,9 +1033,19 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			}
 			if w.porWork.CanLock(header.Coinbase) && len(w.challengeCh) == 0 && len(tPending[header.Coinbase]) == 0 {
 
-				tx, seed, provider, err := dpos.TryCreateChallenge(w.chain, header, env.state)
+				tx, seed, provider, err, trxType := dpos.TryCreateChallenge(w.chain, header, env.state)
+				if err == nil && trxType == 2 {
+					consTxs := make(map[common.Address]types.Transactions)
+					tTxs := make(types.Transactions, 0, 0)
+					tTxs = append(tTxs, tx)
+					consTxs[realMiner] = tTxs
 
-				if err == nil {
+					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
+					if w.commitTransactions(txs, w.coinbase, interrupt) {
+						return
+					}
+					nonceDiff++
+				} else if err == nil && trxType == 1 {
 					seedSignature, err := dpos.SignSeed(header, seed)
 					if err != nil {
 						log.Error("unexcepted sign error", "err", err)
