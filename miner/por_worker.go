@@ -290,7 +290,7 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 		roots = append(roots, rootHash)
 		if rand.Intn(100) < 10 {
 			success := verifyLeaf(seed+i, index, path)
-			if success {
+			if !success {
 				return nil
 			}
 		}
