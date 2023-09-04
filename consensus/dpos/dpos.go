@@ -1350,9 +1350,9 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 				if lastHeader != nil {
 					reward = getBlockReward(lastNumber)
 					lastReward = new(big.Int).Div(reward, big.NewInt(doubleDistributeRound))
-					teamPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.TeamRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
+					teamPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(lastHeader.TeamRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
 					lastReward.Sub(lastReward, teamPartReward)
-					validatorPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(yestHeader.ValidatorRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
+					validatorPartReward := new(big.Int).Div(new(big.Int).Div(new(big.Int).Mul(reward, new(big.Int).SetUint64(lastHeader.ValidatorRate)), big.NewInt(doubleAllPercent)), big.NewInt(distributeRound))
 					lastReward.Sub(lastReward, validatorPartReward)
 					if lastReward.Cmp(common.Big0) > 0 {
 						if (lastHeader.Provider != common.Address{}) {
