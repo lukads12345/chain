@@ -1330,7 +1330,7 @@ func (p *Dpos) trySendBlockReward(chain consensus.ChainHeaderReader, header *typ
 			if lastReward.Cmp(common.Big0) > 0 {
 				if (yestHeader.Provider != common.Address{}) {
 					state.AddBalance(yestHeader.Provider, lastReward)
-					state.AddLockBalance(yestHeader.Provider, teamPartReward)
+					state.AddLockBalance(yestHeader.Provider, lastReward)
 				}
 				state.AddBalance(TeamAddress, teamPartReward)
 				state.AddLockBalance(TeamAddress, teamPartReward)
