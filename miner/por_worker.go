@@ -57,6 +57,12 @@ type challengeResult struct {
 	ChallengeCount int64             `json:"challenge_count"`
 }
 
+type readyResult struct {
+	TaskId         int64 `json:"task_id"`
+	ChallengeCount int64 `json:"challenge_count"`
+	Ready          bool  `json:"ready"`
+}
+
 // ChallengeFinishData is for challenge commit
 type ChallengeFinishData struct {
 	Seed            uint64
@@ -278,6 +284,8 @@ func BuildTreeFromRetrievalAddresses(seeds []string) (*TreeNode, error) {
 
 func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 	roots := make([]string, 0, 0)
+	maxVerifyLeafCount := getMaxVerifyLeafCount(len(result.Paths))
+	verifyLeafCount := 0
 	for i := uint64(0); i < uint64(len(result.Paths)); i++ {
 		path, exist := result.Paths[seed+i]
 		if !exist {
@@ -288,8 +296,9 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 			return nil
 		}
 		roots = append(roots, rootHash)
-		if rand.Intn(100) < 10 {
+		if rand.Intn(100) < 10 && verifyLeafCount < maxVerifyLeafCount {
 			success := verifyLeaf(seed+i, index, path)
+			verifyLeafCount++
 			if !success {
 				return nil
 			}
@@ -301,6 +310,10 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 	}
 	return new(big.Int).SetBytes(*node.Data)
 
+}
+
+func getMaxVerifyLeafCount(count int) int {
+	return 3 + count/1000
 }
 
 func submitIndex(commitUrl string, index uint64, blockNumber uint64, seed uint64) string {
@@ -420,7 +433,10 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 	index := rand.Intn(challengeTreeNodeCount)
 	if res != "" {
 		for {
-			if state == 0 && queryReady(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed) == "success" {
+			res := queryReady(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed)
+			readyRes := readyResult{}
+			json.Unmarshal([]byte(res), &readyRes)
+			if state == 0 && readyRes.Ready {
 				if submitIndex(p.chain.Config().Dpos.ChallengeCommitUrl, uint64(index), challenge.TaskBlockNumber, challenge.Seed) != "" {
 					state = 1
 					startTime = time.Now()
@@ -462,9 +478,10 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 					break
 				}
 			}
-			if (time.Now().Sub(startTime)) > 7*time.Minute {
+			timeout := 7*time.Minute + time.Duration(readyRes.ChallengeCount/5)*time.Second
+			if (time.Now().Sub(startTime)) > timeout {
 				// not response
-				log.Info("provider: %s, seed: %, exceed 7 min", challenge.Provider, challenge.Seed)
+				log.Info("provider: %s, seed: %, exceed: %s", challenge.Provider, challenge.Seed, timeout)
 				*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 				break
 			}
