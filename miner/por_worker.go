@@ -458,30 +458,30 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 								rootHash = verifyTask(challenge.Seed, uint64(index), challengeRes)
 							}
 							if rootHash != nil {
-								log.Info("provider: %s, seed: %, root hash: %s", challenge.Provider, challenge.Seed, rootHash)
+								log.Info("provider: %s, seed: %s, root hash: %s", challenge.Provider, challenge.Seed, rootHash)
 								*p.FinishCh <- ChallengeFinishData{challengeState: Success, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: uint64(challengeRes.ChallengeCount), rootHash: rootHash, Validator: challenge.Validator}
 							} else {
-								log.Info("provider: %s, seed: %, root hash is empty", challenge.Provider, challenge.Seed)
+								log.Info("provider: %s, seed: %s, root hash is empty", challenge.Provider, challenge.Seed)
 								*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 							}
 							break
 						} else {
-							log.Info("provider: %s, seed: %, exceed 3 min", challenge.Provider, challenge.Seed)
+							log.Info("provider: %s, seed: %s, exceed 3 min", challenge.Provider, challenge.Seed)
 							*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 							break
 						}
 					}
 				}
 				if (time.Now().Sub(startTime)) > 3*time.Minute {
-					log.Info("provider: %s, seed: %, exceed 3 min", challenge.Provider, challenge.Seed)
+					log.Info("provider: %s, seed: %s, exceed 3 min", challenge.Provider, challenge.Seed)
 					*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 					break
 				}
 			}
-			timeout := 7*time.Minute + time.Duration(readyRes.ChallengeCount/5)*time.Second
+			timeout := 7*time.Minute + time.Duration(readyRes.ChallengeCount/3)*time.Second
 			if (time.Now().Sub(startTime)) > timeout {
 				// not response
-				log.Info("provider: %s, seed: %, exceed: %s", challenge.Provider, challenge.Seed, timeout)
+				log.Info("provider: %s, seed: %s, exceed: %s", challenge.Provider, challenge.Seed, timeout)
 				*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 				break
 			}
