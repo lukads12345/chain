@@ -433,9 +433,11 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 	index := rand.Intn(challengeTreeNodeCount)
 	if res != "" {
 		for {
-			res := queryReady(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed)
 			readyRes := readyResult{}
-			json.Unmarshal([]byte(res), &readyRes)
+			if !readyRes.Ready {
+				res := queryReady(p.chain.Config().Dpos.ChallengeCommitUrl, challenge.TaskBlockNumber, challenge.Seed)
+				json.Unmarshal([]byte(res), &readyRes)
+			}
 			if state == 0 && readyRes.Ready {
 				if submitIndex(p.chain.Config().Dpos.ChallengeCommitUrl, uint64(index), challenge.TaskBlockNumber, challenge.Seed) != "" {
 					state = 1
