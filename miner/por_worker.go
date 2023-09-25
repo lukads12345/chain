@@ -173,10 +173,12 @@ func verifyTree(treePath string) (bool, string) {
 		sha.Write(tmpByte)
 		hexString = hex.EncodeToString(sha.Sum(nil))
 	}
+
 	return false, ""
 }
 
 func verifyLeaf(seed, index uint64, treePath string) bool {
+	start := time.Now().UnixMilli()
 	var retData [][]string
 	err := json.Unmarshal([]byte(treePath), &retData)
 	if err != nil {
@@ -200,6 +202,7 @@ func verifyLeaf(seed, index uint64, treePath string) bool {
 			return true
 		}
 	}
+	log.Info("verifyLeaf", "seed", seed, "cost mills", time.Now().UnixMilli()-start)
 	return false
 }
 func ParentHash(leftNode []byte, rightNode []byte) []byte {
@@ -283,6 +286,7 @@ func BuildTreeFromRetrievalAddresses(seeds []string) (*TreeNode, error) {
 }
 
 func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
+	start := time.Now().UnixMilli()
 	roots := make([]string, 0, 0)
 	maxVerifyLeafCount := getMaxVerifyLeafCount(len(result.Paths))
 	verifyLeafCount := 0
@@ -308,8 +312,8 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 	if err != nil {
 		return nil
 	}
+	log.Info("verifyTask", "taskId", result.TaskId, "cost mills", time.Now().UnixMilli()-start)
 	return new(big.Int).SetBytes(*node.Data)
-
 }
 
 func getMaxVerifyLeafCount(count int) int {
