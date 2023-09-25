@@ -313,7 +313,7 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 }
 
 func getMaxVerifyLeafCount(count int) int {
-	return 3 + count/1000
+	return 1 + count/1000
 }
 
 func submitIndex(commitUrl string, index uint64, blockNumber uint64, seed uint64) string {
