@@ -1772,6 +1772,43 @@ var ProviderFactoryABI = `[
                   "internalType": "uint256",
                   "name": "last_margin_time",
                   "type": "uint256"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_amount",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bool",
+                      "name": "withdrawn",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_time",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_lock_time",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "remain_margin_amount",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct marginViewInfo[]",
+                  "name": "margin_infos",
+                  "type": "tuple[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "margin_size",
+                  "type": "uint256"
                 }
               ],
               "internalType": "struct providerInfo",
@@ -1929,6 +1966,43 @@ var ProviderFactoryABI = `[
                   "internalType": "uint256",
                   "name": "last_margin_time",
                   "type": "uint256"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_amount",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "bool",
+                      "name": "withdrawn",
+                      "type": "bool"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_time",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "margin_lock_time",
+                      "type": "uint256"
+                    },
+                    {
+                      "internalType": "uint256",
+                      "name": "remain_margin_amount",
+                      "type": "uint256"
+                    }
+                  ],
+                  "internalType": "struct marginViewInfo[]",
+                  "name": "margin_infos",
+                  "type": "tuple[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "margin_size",
+                  "type": "uint256"
                 }
               ],
               "internalType": "struct providerInfo",
@@ -1955,6 +2029,19 @@ var ProviderFactoryABI = `[
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "getPunishAddress",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -1963,6 +2050,19 @@ var ProviderFactoryABI = `[
         }
       ],
       "name": "getPunishAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPunishLength",
       "outputs": [
         {
           "internalType": "uint256",
@@ -2163,6 +2263,19 @@ var ProviderFactoryABI = `[
     },
     {
       "inputs": [],
+      "name": "punish_item_address",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "punish_percent",
       "outputs": [
         {
@@ -2211,6 +2324,19 @@ var ProviderFactoryABI = `[
         }
       ],
       "name": "recoverResource",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "name": "removeProviderPunishList",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -2320,7 +2446,13 @@ var ProviderFactoryABI = `[
       "type": "function"
     },
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
       "name": "withdrawMargin",
       "outputs": [],
       "stateMutability": "nonpayable",
