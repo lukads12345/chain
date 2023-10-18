@@ -1560,6 +1560,57 @@ var ProviderFactoryABI = `[
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "from",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "size",
+          "type": "uint256"
+        }
+      ],
+      "name": "getMarginInfoList",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "margin_amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "withdrawn",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "margin_time",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "margin_lock_time",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "remain_margin_amount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct marginViewInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "address",
           "name": "account",
           "type": "address"

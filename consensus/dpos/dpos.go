@@ -272,6 +272,19 @@ type poaResource struct {
 	StorageCount *big.Int
 }
 
+type marginViewInfo struct {
+	// provider margin amount
+	MarginAmount *big.Int
+	// provider margin has withdrawn or not
+	Withdrawn bool
+	// provider margin time
+	MarginTime uint64
+	// provider margin lock time
+	MarginLockTime uint64
+	// provider margin remain amount
+	RemainMarginAmount *big.Int
+}
+
 // providerInfo is an auto generated low-level Go binding around an user-defined struct.
 type providerInfo struct {
 	Total             poaResource
@@ -284,6 +297,8 @@ type providerInfo struct {
 	Info              string
 	LastChallengeTime *big.Int
 	LastMarginTime    *big.Int
+	MarginInfos       []marginViewInfo
+	MarginSize        uint64
 }
 
 func isToSystemContract(to common.Address) bool {
