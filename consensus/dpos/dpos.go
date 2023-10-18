@@ -278,9 +278,9 @@ type marginViewInfo struct {
 	// provider margin has withdrawn or not
 	Withdrawn bool
 	// provider margin time
-	MarginTime uint64
+	MarginTime *big.Int
 	// provider margin lock time
-	MarginLockTime uint64
+	MarginLockTime *big.Int
 	// provider margin remain amount
 	RemainMarginAmount *big.Int
 }
@@ -298,7 +298,7 @@ type providerInfo struct {
 	LastChallengeTime *big.Int
 	LastMarginTime    *big.Int
 	MarginInfos       []marginViewInfo
-	MarginSize        uint64
+	MarginSize        *big.Int
 }
 
 func isToSystemContract(to common.Address) bool {
