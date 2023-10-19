@@ -76,12 +76,12 @@ const (
 	oneTDiv1000    = 1073741824   // 1024*1024*1024*1024/1000
 	oneGDiv1000    = 1048576      // 1024*1024*1024/1000
 	//todo change rate for mainnet
-	challengeRate           = 30000           // One in 10,000  chance of triggering a challenge
-	maxSeedInt              = int64(1) << 62  // maxSeedInt
-	defaultGasLimit         = uint64(1000000) // default 100w gas limit
-	defaultGasPrice         = int64(100)      // default 100 gas price
-	challengeInterval       = 4 * time.Hour   // default challenge interval
-	punishChallengeInterval = 2 * time.Hour   // default punish provider challenge interval
+	challengeRate           = 30000            // One in 10,000  chance of triggering a challenge
+	maxSeedInt              = int64(1) << 62   // maxSeedInt
+	defaultGasLimit         = uint64(1000000)  // default 100w gas limit
+	defaultGasPrice         = int64(100)       // default 100 gas price
+	challengeInterval       = 30 * time.Minute // default challenge interval
+	punishChallengeInterval = 30 * time.Minute // default punish provider challenge interval
 )
 
 const (
