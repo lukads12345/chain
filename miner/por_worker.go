@@ -108,24 +108,25 @@ func submitSeed(commitUrl string, seed uint64, blockNumber uint64, Validator str
 	method := "POST"
 
 	payload := strings.NewReader(fmt.Sprintf(`{"seed":%v,"block_number":%v,"validator":"%v","provider":"%v","create_tx":"%v","Signature":"%v"}`, seed, blockNumber, Validator, Provider, CreateTx, Signature))
+	log.Info("submitSeed", "seed", seed)
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Error("submitSeed error", err.Error())
 		return ""
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Error("submitSeed error", err.Error())
 		return ""
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Error("submitSeed error", err.Error())
 		return ""
 	}
 	//fmt.Println(string(body))
