@@ -405,6 +405,7 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 			blockTemp := p.chain.GetBlockByNumber(challenge.TaskBlockNumber)
 			txsReceipt := p.eth.BlockChain().GetReceiptsByHash(blockTemp.Hash())
 			if len(txsReceipt) == 0 {
+				log.Info("rollback transaction len 0", "provider", challenge.Provider, "seed", challenge.Seed)
 				return
 			}
 			seedByte := make([]byte, 8)
@@ -417,17 +418,17 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 						isFound = true
 						break
 					} else {
-
+						log.Info("rollback transaction logs len 0", "provider", challenge.Provider, "seed", challenge.Seed)
 						return
 					}
 				}
 			}
 			if !isFound {
+				log.Info("rollback transaction not found", "provider", challenge.Provider, "seed", challenge.Seed)
 				return
 			} else {
 				break
 			}
-
 		}
 		time.Sleep(time.Second * 10)
 	}
@@ -464,22 +465,22 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 								rootHash = verifyTask(challenge.Seed, uint64(index), challengeRes)
 							}
 							if rootHash != nil {
-								log.Info("provider: %s, seed: %s, root hash: %s", challenge.Provider, challenge.Seed, rootHash)
+								log.Info("provider", challenge.Provider, "seed", challenge.Seed, "root hash", rootHash)
 								*p.FinishCh <- ChallengeFinishData{challengeState: Success, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: uint64(challengeRes.ChallengeCount), rootHash: rootHash, Validator: challenge.Validator}
 							} else {
-								log.Info("provider: %s, seed: %s, root hash is empty", challenge.Provider, challenge.Seed)
+								log.Info(" root hash is empty", "provider", challenge.Provider, "seed", challenge.Seed)
 								*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 							}
 							break
 						} else {
-							log.Info("provider: %s, seed: %s, exceed 3 min", challenge.Provider, challenge.Seed)
+							log.Info("exceed 3 min", "provider", challenge.Provider, "seed", challenge.Seed)
 							*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 							break
 						}
 					}
 				}
 				if (time.Now().Sub(startTime)) > 3*time.Minute {
-					log.Info("provider: %s, seed: %s, exceed 3 min", challenge.Provider, challenge.Seed)
+					log.Info("exceed 3 min", "provider", challenge.Provider, "seed", challenge.Seed)
 					*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 					break
 				}
@@ -487,7 +488,7 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 			timeout := 7*time.Minute + time.Duration(readyRes.ChallengeCount/3)*time.Second
 			if (time.Now().Sub(startTime)) > timeout {
 				// not response
-				log.Info("provider: %s, seed: %s, exceed: %s", challenge.Provider, challenge.Seed, timeout)
+				log.Info("exceed", "provider", challenge.Provider, "seed", challenge.Seed)
 				*p.FinishCh <- ChallengeFinishData{challengeState: Fail, Seed: challenge.Seed, Provider: challenge.Provider, challengeAmount: 0, rootHash: common.Big0, Validator: challenge.Validator}
 				break
 			}
