@@ -6,7 +6,7 @@ InitVerse Chain starts its development based on go-ethereum fork. So you may see
 
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
-)](https://pkg.go.dev/github.com/Project-InitVerse/ini-chain?tab=doc)
+)](https://github.com/Project-InitVerse/ini-chain?tab=doc)
 [![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://discord.gg/5Z3C3SdxDw)
 
 But from that baseline of EVM compatible, InitVerse Chain introduces  a system of 63 validators with Proof of Resources (PoR) consensus that can support short block time and lower fees. The most bonded provider candidates of staking have a higher probability of receiving block rewards. The double-sign detection and other slashing logic guarantee security, stability, and chain finality.
@@ -31,7 +31,7 @@ To combine DPoS and PoA for consensus, InitVerse Chain implement a novel consens
 
 1. Blocks are produced by a limited set of validators.
 2. Validators take turns to produce blocks in a POR manner, similar to Ethereum's Clique consensus engine.
-3. Parlia consensus engine will interact with a set of [system contracts](https://github.com/Project-InitVerse/ini-chain_dpos_contract) to achieve liveness slash, revenue distributing and validator set renewing func.
+3. Parlia consensus engine will interact with a set of [system contracts](https://github.com/Project-InitVerse/ini-chain-system-contract) to achieve liveness slash, revenue distributing and validator set renewing func.
 
 
 ## Native Token
