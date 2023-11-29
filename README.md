@@ -4,11 +4,6 @@ The goal of InitVerse Chain is to provide a decentralized cloud service platform
 
 InitVerse Chain starts its development based on go-ethereum fork. So you may see many toolings, binaries and also docs are based on Ethereum ones, such as the name “geth”.
 
-[![API Reference](
-https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
-)](https://github.com/Project-InitVerse/ini-chain?tab=doc)
-[![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://discord.gg/5Z3C3SdxDw)
-
 But from that baseline of EVM compatible, InitVerse Chain introduces  a system of 63 validators with Proof of Resources (PoR) consensus that can support short block time and lower fees. The most bonded provider candidates of staking have a higher probability of receiving block rewards. The double-sign detection and other slashing logic guarantee security, stability, and chain finality.
 
 - **A self-sovereign blockchain**: Provides security and safety with elected validators.
