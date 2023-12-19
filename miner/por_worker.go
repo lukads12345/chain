@@ -291,10 +291,10 @@ func verifyTask(seed uint64, index uint64, result challengeResult) *big.Int {
 	roots := make([]string, 0, 0)
 	maxVerifyLeafCount := getMaxVerifyLeafCount(len(result.Paths))
 	verifyLeafCount := 0
-	for i := uint64(0); i < uint64(len(result.Paths)); i++ {
+	for i := uint64(0); i < uint64(result.ChallengeCount); i++ {
 		path, exist := result.Paths[seed+i]
 		if !exist {
-			return nil
+			continue
 		}
 		success, rootHash := verifyTree(path)
 		if !success {
@@ -456,7 +456,7 @@ func (p *porWorker) challengeMainLoop(challenge challengeTask) {
 					state = 2
 					challengeRes := challengeResult{}
 					json.Unmarshal([]byte(res), &challengeRes)
-					if challengeRes.Success && int64(len(challengeRes.Paths)) == challengeRes.ChallengeCount {
+					if challengeRes.Success {
 						//todo cal root hash
 						if (time.Now().Sub(startTime)) < 3*time.Minute {
 							var rootHash *big.Int
