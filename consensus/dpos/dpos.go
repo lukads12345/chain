@@ -2422,27 +2422,27 @@ func (p *Dpos) CanCreate(state consensus.StateReader, addr common.Address, heigh
 func (p *Dpos) ValidateTx(tx *types.Transaction, header *types.Header, parentState *state.StateDB) error {
 	// Must use the parent state for current validation,
 	// so we must starting the validation after redCoastBlock
-	if p.chainConfig.ChainID == params.TestnetChainConfig.ChainID {
-
-		m, err := p.getBlacklist(header, parentState)
-		if err != nil {
-			log.Error("can't get blacklist", "err", err)
-			return err
-		}
-		m[systemcontract.ProviderFactoryContractAddr] = DirectionTo
-		m[systemcontract.ValidatorFactoryContractAddr] = DirectionTo
-		m[systemcontract.AddressListContractAddr] = DirectionTo
-		m[systemcontract.GetValidatorAdmin(p.chainConfig.ChainID)] = DirectionTo
-		m[systemcontract.GetAddressListAdmin(p.chainConfig.ChainID)] = DirectionTo
-		//if _, exist := m[from]; (!exist) {
-		//	return errors.New("address denied")
-		//}
-		if to := tx.To(); to != nil {
-			if d, exist := m[*to]; !exist || (d == DirectionFrom) {
-				return errors.New("address denied")
-			}
-		}
-	}
+	//if p.chainConfig.ChainID == params.TestnetChainConfig.ChainID {
+	//
+	//	m, err := p.getBlacklist(header, parentState)
+	//	if err != nil {
+	//		log.Error("can't get blacklist", "err", err)
+	//		return err
+	//	}
+	//	m[systemcontract.ProviderFactoryContractAddr] = DirectionTo
+	//	m[systemcontract.ValidatorFactoryContractAddr] = DirectionTo
+	//	m[systemcontract.AddressListContractAddr] = DirectionTo
+	//	m[systemcontract.GetValidatorAdmin(p.chainConfig.ChainID)] = DirectionTo
+	//	m[systemcontract.GetAddressListAdmin(p.chainConfig.ChainID)] = DirectionTo
+	//	//if _, exist := m[from]; (!exist) {
+	//	//	return errors.New("address denied")
+	//	//}
+	//	if to := tx.To(); to != nil {
+	//		if d, exist := m[*to]; !exist || (d == DirectionFrom) {
+	//			return errors.New("address denied")
+	//		}
+	//	}
+	//}
 	if p.chainConfig.RedCoastBlock != nil && p.chainConfig.RedCoastBlock.Cmp(header.Number) < 0 {
 		from, err := types.Sender(p.signer, tx)
 		if err != nil {
