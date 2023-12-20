@@ -14,8 +14,8 @@
     "RamanujanBlock": 0,
     "NielsBlock": 0,
     "MirrorSyncBlock": 0,
-    "BerlinBlock": 37000,
-    "redCoastBlock": 2,
+    "BerlinBlock": 4,
+    "redCoastBlock": 22222222220,
     "Dpos": {
       "period": 6,
       "epoch": 200
