@@ -75,7 +75,7 @@ var (
 	}
 
 	TestnetChainConfig = &ChainConfig{
-		ChainID:        big.NewInt(772),
+		ChainID:        big.NewInt(233),
 		HomesteadBlock: big.NewInt(0),
 		DAOForkBlock:   big.NewInt(0),
 		DAOForkSupport: true,
