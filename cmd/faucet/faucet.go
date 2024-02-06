@@ -553,7 +553,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
-		log.Info("Faucet request valid", "url", msg.URL, "tier", msg.Tier, "user", username, "address", address)
+		log.Info("Faucet request valid", "url", msg.URL, "tier", msg.Tier, "user", username, "address", address, "ip", ips[len(ips)-2])
 
 		// Ensure the user didn't request funds too recently
 		f.lock.Lock()
@@ -563,6 +563,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 		)
 
 		if ipTimeout := f.timeouts[ips[len(ips)-2]]; time.Now().Before(ipTimeout) {
+			log.Info("ip has fund", "ip", ips[len(ips)-2])
 			if err = sendError(wsconn, fmt.Errorf("%s left until next allowance", common.PrettyDuration(time.Until(ipTimeout)))); err != nil { // nolint: gosimple
 				log.Warn("Failed to send funding error to client", "err", err)
 			}
@@ -629,6 +630,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Send an error if too frequent funding, othewise a success
 		if !fund {
+			log.Info("id has fund", "id", id)
 			if err = sendError(wsconn, fmt.Errorf("%s left until next allowance", common.PrettyDuration(time.Until(timeout)))); err != nil { // nolint: gosimple
 				log.Warn("Failed to send funding error to client", "err", err)
 				return
