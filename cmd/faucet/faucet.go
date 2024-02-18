@@ -31,6 +31,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/big"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -366,24 +367,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Start tracking the connection and drop at the end
 	defer conn.Close()
-	list := []string{"X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_CLIENT_IP", "X-Real-IP"}
-	var ips []string
-	for _, one_header := range list {
-		ipsStr := r.Header.Get(one_header)
-
-		ips = strings.Split(ipsStr, ",")
-		if len(ips) > 0 {
-			ips = append(ips, "")
-			break
-		}
-	}
-	//ipsStr := r.Header.Get("X-Forwarded-For")
-	//fmt.Println(ipsStr)
-	//ips := strings.Split(ipsStr, ",")
-
-	if len(ips) < 2 {
-		ips = []string{"", "127.0.0.1"}
-	}
+	ip := extractRealIP(r)
 
 	f.lock.Lock()
 	wsconn := &wsConn{conn: conn}
@@ -553,7 +537,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
-		log.Info("Faucet request valid", "url", msg.URL, "tier", msg.Tier, "user", username, "address", address, "ip", ips[len(ips)-2])
+		log.Info("Faucet request valid", "url", msg.URL, "tier", msg.Tier, "user", username, "address", address, "ip", ip)
 
 		// Ensure the user didn't request funds too recently
 		f.lock.Lock()
@@ -562,8 +546,8 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 			timeout time.Time
 		)
 
-		if ipTimeout := f.timeouts[ips[len(ips)-2]]; time.Now().Before(ipTimeout) {
-			log.Info("ip has fund", "ip", ips[len(ips)-2])
+		if ipTimeout := f.timeouts[ip]; time.Now().Before(ipTimeout) {
+			log.Info("ip has fund", "ip", ip)
 			if err = sendError(wsconn, fmt.Errorf("%s left until next allowance", common.PrettyDuration(time.Until(ipTimeout)))); err != nil { // nolint: gosimple
 				log.Warn("Failed to send funding error to client", "err", err)
 			}
@@ -623,7 +607,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 			grace := timeout / 288 // 24h timeout => 5m grace
 
 			f.timeouts[id] = time.Now().Add(timeout - grace)
-			f.timeouts[ips[len(ips)-2]] = time.Now().Add(timeout - grace)
+			f.timeouts[ip] = time.Now().Add(timeout - grace)
 			fund = true
 		}
 		f.lock.Unlock()
@@ -646,6 +630,39 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 		default:
 		}
 	}
+}
+
+func extractRealIP(r *http.Request) string {
+	headersToCheck := []string{"X-Real-IP", "X-Forwarded-For", "X-Forwarded", "X-Cluster-Client-IP", "X-Proxy-Remote-IP", "X-Proxy-Client-IP", "Client-IP", "WL-Proxy-Client-IP"}
+
+	for _, header := range headersToCheck {
+		if ip := r.Header.Get(header); ip != "" {
+			ips := strings.Split(ip, ",")
+			for _, ip := range ips {
+				ip = strings.TrimSpace(ip)
+				if net.ParseIP(ip) != nil {
+					if !isPrivateIP(net.ParseIP(ip)) && ip != "127.0.0.1" {
+						return ip
+					}
+				}
+			}
+		}
+	}
+
+	return r.RemoteAddr
+}
+
+func isPrivateIP(ip net.IP) bool {
+	if ip == nil {
+		return false
+	}
+	ip = ip.To4()
+	if ip == nil {
+		return false
+	}
+	return ip[0] == 10 ||
+		(ip[0] == 192 && ip[1] == 168) ||
+		(ip[0] == 172 && (ip[1]&0xf0) == 16)
 }
 
 // refresh attempts to retrieve the latest header from the chain and extract the
