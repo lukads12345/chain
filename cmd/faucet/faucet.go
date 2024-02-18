@@ -640,6 +640,7 @@ func extractRealIP(r *http.Request) string {
 			ips := strings.Split(ip, ",")
 			for _, ip := range ips {
 				ip = strings.TrimSpace(ip)
+				ip = strings.Split(ip, ":")[0]
 				if net.ParseIP(ip) != nil {
 					if !isPrivateIP(net.ParseIP(ip)) && ip != "127.0.0.1" {
 						return ip
