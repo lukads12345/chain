@@ -650,7 +650,8 @@ func extractRealIP(r *http.Request) string {
 		}
 	}
 
-	return r.RemoteAddr
+	log.Info("unable get real ip", "remoteAddr", r.RemoteAddr)
+	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
 func isPrivateIP(ip net.IP) bool {
