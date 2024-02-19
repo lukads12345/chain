@@ -633,8 +633,8 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func extractRealIP(r *http.Request) string {
-	headersToCheck := []string{"X-Real-IP", "X-Forwarded-For", "X-Forwarded", "X-Cluster-Client-IP", "X-Proxy-Remote-IP", "X-Proxy-Client-IP", "Client-IP", "WL-Proxy-Client-IP"}
-
+	headersToCheck := []string{"X-Forwarded-For", "X-Forwarded", "X-Real-IP", "X-Cluster-Client-IP", "X-Proxy-Remote-IP", "X-Proxy-Client-IP", "Client-IP", "WL-Proxy-Client-IP"}
+	log.Info("get request header", "X-Forwarded-For", r.Header.Get("X-Forwarded-For"))
 	for _, header := range headersToCheck {
 		if ip := r.Header.Get(header); ip != "" {
 			ips := strings.Split(ip, ",")
