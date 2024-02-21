@@ -196,7 +196,7 @@
 				bytes.push(0);
 				i++;
 			}
-			return new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(bytes.reverse());
+			return String.fromCharCode.apply(null, new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(bytes.reverse()))
 		};
 
 		// Define a function that creates closures to drop old requests
