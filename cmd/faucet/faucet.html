@@ -141,12 +141,63 @@
 
 	<script>
 		// Global variables to hold the current status of the faucet
+
 		var attempt = 0;
 		var server;
 		var tier = 0;
 		var symbol = "INI";
 		var requests = [];
 		var captcha;
+
+		var decode = function (string) {
+			var ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+			var ALPHABET_MAP = {};
+			var i = 0;
+
+			while (i < ALPHABET.length) {
+				ALPHABET_MAP[ALPHABET.charAt(i)] = i;
+				i++;
+			}
+			var bytes, c, carry, j;
+			if (string.length === 0) {
+				return new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(0);
+			}
+			i = void 0;
+			j = void 0;
+			bytes = [0];
+			i = 0;
+			while (i < string.length) {
+				c = string[i];
+				if (!(c in ALPHABET_MAP)) {
+					throw "Base58.decode received unacceptable input. Character '" + c + "' is not in the Base58 alphabet.";
+				}
+				j = 0;
+				while (j < bytes.length) {
+					bytes[j] *= 58;
+					j++;
+				}
+				bytes[0] += ALPHABET_MAP[c];
+				carry = 0;
+				j = 0;
+				while (j < bytes.length) {
+					bytes[j] += carry;
+					carry = bytes[j] >> 8;
+					bytes[j] &= 0xff;
+					++j;
+				}
+				while (carry) {
+					bytes.push(carry & 0xff);
+					carry >>= 8;
+				}
+				i++;
+			}
+			i = 0;
+			while (string[i] === "1" && i < string.length - 1) {
+				bytes.push(0);
+				i++;
+			}
+			return new (typeof Uint8Array !== "undefined" && Uint8Array !== null ? Uint8Array : Buffer)(bytes.reverse());
+		};
 
 		// Define a function that creates closures to drop old requests
 		var dropper = function (hash) {
@@ -173,6 +224,9 @@
 
 		var openTwitterUrl = function () {
 			var address = $("#url")[0].value
+			if (address.startsWith("I4")) {
+				address = "0x" + decode(address.substring(2))
+			}
 
 			if (address.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
 				window.open('https://twitter.com/intent/tweet?text=Requesting%20faucet%20funds%20into%20' + address + '%20on%20the%20%23InChain%20%20test%20network.')
@@ -195,6 +249,9 @@
 			// }
 
 			var address = $("#url")[0].value
+			if (address.startsWith("I4")) {
+				address = "0x" + decode(address.substring(2))
+			}
 
 			if (address.match(/^(0x)?[0-9a-fA-F]{40}$/)) {
 				server.send(JSON.stringify({
