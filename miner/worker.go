@@ -958,7 +958,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			if w.minerIndex > len(w.posCoinbase) {
 				w.minerIndex = w.minerIndex % len(w.posCoinbase)
 			}
-			if (uint64(timestamp) - parent.Time()) <= 20 {
+			if uint64(time.Now().Unix()) < parent.Time() || (uint64(time.Now().Unix()) - parent.Time()) <= 20 {
 				addr_res := dpos.CheckHasInTurn(w.chain, w.posCoinbase, header)
 				if addr_res != (common.Address{}) {
 					realMiner = addr_res
