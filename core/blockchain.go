@@ -1892,7 +1892,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, verifySeals bool) (int, er
 		substart := time.Now()
 
 		receipts, logs, usedGas, err := bc.processor.Process(block, statedb, bc.vmConfig)
-		
+
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			return it.index, err
@@ -2384,12 +2384,12 @@ func (bc *BlockChain) maintainTxIndex(ancients uint64) {
 func (bc *BlockChain) reportBlock(block *types.Block, receipts types.Receipts, err error) {
 	rawdb.WriteBadBlock(bc.db, block)
 
-	var receiptString string
-	for i, receipt := range receipts {
-		receiptString += fmt.Sprintf("\t %d: cumulative: %v gas: %v contract: %v status: %v tx: %v logs: %v bloom: %x state: %x\n",
-			i, receipt.CumulativeGasUsed, receipt.GasUsed, receipt.ContractAddress.Hex(),
-			receipt.Status, receipt.TxHash.Hex(), receipt.Logs, receipt.Bloom, receipt.PostState)
-	}
+	//var receiptString string
+	//for i, receipt := range receipts {
+	//	receiptString += fmt.Sprintf("\t %d: cumulative: %v gas: %v contract: %v status: %v tx: %v logs: %v bloom: %x state: %x\n",
+	//		i, receipt.CumulativeGasUsed, receipt.GasUsed, receipt.ContractAddress.Hex(),
+	//		receipt.Status, receipt.TxHash.Hex(), receipt.Logs, receipt.Bloom, receipt.PostState)
+	//}
 	log.Error(fmt.Sprintf(`
 ########## BAD BLOCK #########
 Chain config: %v
@@ -2400,7 +2400,7 @@ Hash: 0x%x
 
 Error: %v
 ##############################
-`, bc.chainConfig, block.Number(), block.Hash(), receiptString, err))
+`, bc.chainConfig, block.Number(), block.Hash(), "", err))
 }
 
 // InsertHeaderChain attempts to insert the given header chain in to the local
