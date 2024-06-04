@@ -996,8 +996,8 @@ func (d *Downloader) findAncestorBinarySearch(p *peerConnection, mode SyncMode, 
 				}
 				header := d.lightchain.GetHeaderByHash(h) // Independent of sync mode, header surely exists
 				if header == nil {
-					p.log.Error("header not found", "number", header.Number, "hash", header.Hash(), "request", check)
-					return 0, fmt.Errorf("%w: header no found (%d)", errBadPeer, header.Number)
+					//p.log.Error("header not found", "number", header.Number, "hash", header.Hash(), "request", check)
+					return 0, fmt.Errorf("%w: header no found (%d)", errBadPeer, n)
 				}
 				if header.Number.Uint64() != check {
 					p.log.Warn("Received non requested header", "number", header.Number, "hash", header.Hash(), "request", check)
