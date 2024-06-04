@@ -810,6 +810,11 @@ LOOP:
 		// (3) worker recreate the mining block with any newly arrived transactions, the interrupt signal is 2.
 		// For the first two cases, the semi-finished work will be discarded.
 		// For the third case, the semi-finished work will be submitted to the consensus engine.
+		if len(w.current.txs) > 10 {
+			log.Trace("Not enough tx for further transactions", "have", w.current.gasPool, "want", params.TxGas)
+			break
+		}
+
 		if interrupt != nil && atomic.LoadInt32(interrupt) != commitInterruptNone {
 			// Notify resubmit loop to increase resubmitting interval due to too frequent commits.
 			if atomic.LoadInt32(interrupt) == commitInterruptResubmit {
@@ -958,7 +963,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			if w.minerIndex > len(w.posCoinbase) {
 				w.minerIndex = w.minerIndex % len(w.posCoinbase)
 			}
-			if uint64(time.Now().Unix()) < parent.Time() || (uint64(time.Now().Unix()) - parent.Time()) <= 20 {
+			if uint64(time.Now().Unix()) < parent.Time() || (uint64(time.Now().Unix())-parent.Time()) <= 20 {
 				addr_res := dpos.CheckHasInTurn(w.chain, w.posCoinbase, header)
 				if addr_res != (common.Address{}) {
 					realMiner = addr_res
