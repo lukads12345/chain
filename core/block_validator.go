@@ -133,10 +133,8 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 		},
 		func() error {
 			if root := statedb.IntermediateRoot(v.config.IsEIP158(header.Number)); header.Root != root {
-				block_str, err := json.Marshal(block)
-				if err != nil {
-					fmt.Errorf("invalid merkle root block %x", string(block_str))
-				}
+				fmt.Errorf("invalid merkle root block %+v", block)
+				
 				statedb.IterativeDump(true, true, true, json.NewEncoder(os.Stdout))
 				return fmt.Errorf("invalid merkle root (remote: %x local: %x)", header.Root, root)
 			} else {
