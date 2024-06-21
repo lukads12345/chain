@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
+        "PureChain/log"
 	"PureChain/consensus"
 	"PureChain/core/state"
 	"PureChain/core/types"
@@ -133,8 +133,8 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 		},
 		func() error {
 			if root := statedb.IntermediateRoot(v.config.IsEIP158(header.Number)); header.Root != root {
-				fmt.Errorf("invalid merkle root block %+v", block)
-				
+				tmp_err:=fmt.Errorf("invalid merkle root block %+v", block)
+				log.Error("invalid merkle root block","error",tmp_err)
 				statedb.IterativeDump(true, true, true, json.NewEncoder(os.Stdout))
 				return fmt.Errorf("invalid merkle root (remote: %x local: %x)", header.Root, root)
 			} else {
