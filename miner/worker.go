@@ -810,10 +810,10 @@ LOOP:
 		// (3) worker recreate the mining block with any newly arrived transactions, the interrupt signal is 2.
 		// For the first two cases, the semi-finished work will be discarded.
 		// For the third case, the semi-finished work will be submitted to the consensus engine.
-		if len(w.current.txs) > 10 {
-			log.Trace("Not enough tx for further transactions", "have", w.current.gasPool, "want", params.TxGas)
-			break
-		}
+		//if len(w.current.txs) > 10 {
+		//	log.Trace("Not enough tx for further transactions", "have", w.current.gasPool, "want", params.TxGas)
+		//	break
+		//}
 
 		if interrupt != nil && atomic.LoadInt32(interrupt) != commitInterruptNone {
 			// Notify resubmit loop to increase resubmitting interval due to too frequent commits.
