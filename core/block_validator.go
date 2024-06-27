@@ -134,7 +134,7 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 				transaction_str := ""
 				for _, oneTrx := range block.Transactions() {
 					txJson, err := oneTrx.MarshalJSON()
-					if err != nil {
+					if err == nil {
 						transaction_str += string(txJson) + "\n"
 					} else {
 						transaction_str += "marshal json failed tx hash " + string(oneTrx.Hash().String()) + "\n"
