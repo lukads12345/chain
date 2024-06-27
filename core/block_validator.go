@@ -17,10 +17,7 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
-        "PureChain/log"
 	"PureChain/consensus"
 	"PureChain/core/state"
 	"PureChain/core/types"
