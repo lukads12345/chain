@@ -133,11 +133,18 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 		},
 		func() error {
 			if root := statedb.IntermediateRoot(v.config.IsEIP158(header.Number)); header.Root != root {
-				block_str, err := json.Marshal(block)
-				if err != nil {
-					fmt.Errorf("invalid merkle root block %x", string(block_str))
+				transaction_str := ""
+				for _, oneTrx := range block.Transactions() {
+					txJson, err := oneTrx.MarshalJSON()
+					if err != nil {
+						transaction_str += string(txJson) + "\n"
+					} else {
+						transaction_str += "marshal json failed tx hash " + string(oneTrx.Hash().String()) + "\n"
+					}
+
 				}
-				statedb.IterativeDump(true, true, true, json.NewEncoder(os.Stdout))
+				fmt.Errorf("invalid merkle root block number%v transaction %v", header.Number.String(), transaction_str)
+				//statedb.IterativeDump(true, true, true, json.NewEncoder(os.Stdout))
 				return fmt.Errorf("invalid merkle root (remote: %x local: %x)", header.Root, root)
 			} else {
 				return nil
