@@ -710,20 +710,22 @@ func (db *Database) Commit(node common.Hash, report bool, callback func(common.H
 	// by only uncaching existing data when the database write finalizes.
 	start := time.Now()
 	batch := db.diskdb.NewBatch()
-
+	db.lock.RLock()
+	//defer db.lock.Unlock()
 	// Move all of the accumulated preimages into a write batch
 	if db.preimages != nil {
 		rawdb.WritePreimages(batch, db.preimages)
 		// Since we're going to replay trie node writes into the clean cache, flush out
 		// any batched pre-images before continuing.
 		if err := batch.Write(); err != nil {
+			db.lock.RUnlock()
 			return err
 		}
 		batch.Reset()
 	}
 	// Move the trie itself into the batch, flushing if enough data is accumulated
 	nodes, storage := len(db.dirties), db.dirtiesSize
-
+	db.lock.RUnlock()
 	uncacher := &cleaner{db}
 	if err := db.commit(node, batch, uncacher, callback); err != nil {
 		log.Error("Failed to commit trie from trie database", "err", err)
@@ -735,8 +737,7 @@ func (db *Database) Commit(node common.Hash, report bool, callback func(common.H
 		return err
 	}
 	// Uncache any leftovers in the last batch
-	db.lock.Lock()
-	defer db.lock.Unlock()
+	//db.lock.Lock()
 
 	batch.Replay(uncacher)
 	batch.Reset()
