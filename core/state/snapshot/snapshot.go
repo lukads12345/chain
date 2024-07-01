@@ -468,11 +468,10 @@ func (t *Tree) cap(diff *diffLayer, layers int) *diskLayer {
 	case *diffLayer:
 		// Flatten the parent into the grandparent. The flattening internally obtains a
 		// write lock on grandparent.
-		flattened := parent.flatten().(*diffLayer)
-		t.layers[flattened.root] = flattened
-
 		diff.lock.Lock()
 		defer diff.lock.Unlock()
+		flattened := parent.flatten().(*diffLayer)
+		t.layers[flattened.root] = flattened
 
 		diff.parent = flattened
 		if flattened.memory < aggregatorMemoryLimit {

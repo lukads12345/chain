@@ -415,6 +415,8 @@ type Syncer struct {
 	storageSynced  uint64             // Number of storage slots downloaded
 	storageBytes   common.StorageSize // Number of storage trie bytes persisted to disk
 
+	extProgress *syncProgress
+
 	// Request tracking during healing phase
 	trienodeHealIdlers map[string]struct{} // Peers that aren't serving trie node requests
 	bytecodeHealIdlers map[string]struct{} // Peers that aren't serving bytecode requests
@@ -469,6 +471,7 @@ func NewSyncer(db ethdb.KeyValueStore) *Syncer {
 		trienodeHealReqs: make(map[uint64]*trienodeHealRequest),
 		bytecodeHealReqs: make(map[uint64]*bytecodeHealRequest),
 		stateWriter:      db.NewBatch(),
+		extProgress:      new(syncProgress),
 	}
 }
 
@@ -623,6 +626,20 @@ func (s *Syncer) Sync(root common.Hash, cancel chan struct{}) error {
 			s.assignTrienodeHealTasks(trienodeHealResps, trienodeHealReqFails, cancel)
 			s.assignBytecodeHealTasks(bytecodeHealResps, bytecodeHealReqFails, cancel)
 		}
+		s.lock.Lock()
+		s.extProgress = &syncProgress{
+			AccountSynced:      s.accountSynced,
+			AccountBytes:       s.accountBytes,
+			BytecodeSynced:     s.bytecodeSynced,
+			BytecodeBytes:      s.bytecodeBytes,
+			StorageSynced:      s.storageSynced,
+			StorageBytes:       s.storageBytes,
+			TrienodeHealSynced: s.trienodeHealSynced,
+			TrienodeHealBytes:  s.trienodeHealBytes,
+			BytecodeHealSynced: s.bytecodeHealSynced,
+			BytecodeHealBytes:  s.bytecodeHealBytes,
+		}
+		s.lock.Unlock()
 		// Wait for something to happen
 		select {
 		case <-s.update:
@@ -695,6 +712,9 @@ func (s *Syncer) loadSyncStatus() {
 					}
 				}
 			}
+			s.lock.Lock()
+			defer s.lock.Unlock()
+
 			s.snapped = len(s.tasks) == 0
 
 			s.accountSynced = progress.AccountSynced
