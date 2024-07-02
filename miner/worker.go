@@ -842,6 +842,7 @@ LOOP:
 					log.Info("Not enough time for further transactions", "tx0", string(bData))
 				}
 				log.Info("Not enough time for further transactions", "txs", len(w.current.txs))
+				stopTimer.Reset(0)
 				break LOOP
 			default:
 			}
@@ -1140,17 +1141,20 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
 func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time) error {
-	s := w.current.state
+
 	//fmt.Println("commit",w.current.header.Number)
 	//fmt.Println("commit",w.current.header.Extra)
-	block, receipts, err := w.engine.FinalizeAndAssemble(w.chain, types.CopyHeader(w.current.header), s, w.current.txs, uncles, w.current.receipts)
-	if err != nil {
-		return err
-	}
+
 	if w.isRunning() {
+		s := w.current.state.Copy()
+		block, receipts, err := w.engine.FinalizeAndAssemble(w.chain, types.CopyHeader(w.current.header), s, w.current.txs, uncles, w.current.receipts)
+		if err != nil {
+			return err
+		}
 		if interval != nil {
 			interval()
 		}
+
 		select {
 		case w.taskCh <- &task{receipts: receipts, state: s, block: block, createdAt: time.Now()}:
 			w.unconfirmed.Shift(block.NumberU64() - 1)

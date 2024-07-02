@@ -897,22 +897,22 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	// Initialize all system contracts at block 1.
 	if header.Number.Cmp(common.Big1) == 0 {
 		if err := p.initializeSystemContracts(chain, header, state); err != nil {
-			log.Error("Initialize system contracts failed", "err", err)
+			log.Error("Initialize system contracts failed", "block", header.Number.String(), "err", err)
 			return err
 		}
 	}
 	tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash1", "hash", tmp_root.String())
+	log.Error("finalize root hash1", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.tryPunishValidator(chain, header, state); err != nil {
 		return err
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash2", "hash", tmp_root.String())
+	log.Error("finalize root hash2", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.punishProvider(chain, header, state); err != nil {
 		return err
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash3", "hash", tmp_root.String())
+	log.Error("finalize root hash3", "block", header.Number.String(), "hash", tmp_root.String())
 	/*
 		if header.Difficulty.Cmp(diffInTurn) != 0 {
 			if err := p.tryPunishValidator(chain, header, state); err != nil {
@@ -937,7 +937,7 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash4", "hash", tmp_root.String())
+	log.Error("finalize root hash4", "block", header.Number.String(), "hash", tmp_root.String())
 	//}
 
 	// warn if not in majority fork
@@ -978,7 +978,7 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 		}
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash5", "hash", tmp_root.String())
+	log.Error("finalize root hash5", "block", header.Number.String(), "hash", tmp_root.String())
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
 	//cx := chainContext{Chain: chain, dpos: p}
 	//if header.Number.Cmp(common.Big1) == 0 {
@@ -1172,18 +1172,18 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		}
 	}
 	tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash1", "hash", tmp_root.String())
+	log.Error("FinalizeAndAssemble root hash1", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.tryPunishValidator(chain, header, state); err != nil {
 
 		panic(err)
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash2", "hash", tmp_root.String())
+	log.Error("FinalizeAndAssemble root hash2", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.punishProvider(chain, header, state); err != nil {
 		panic(err)
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash3", "hash", tmp_root.String())
+	log.Error("FinalizeAndAssemble root hash3", "block", header.Number.String(), "hash", tmp_root.String())
 	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
@@ -1191,7 +1191,7 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		}
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash4", "hash", tmp_root.String())
+	log.Error("FinalizeAndAssemble root hash4", "block", header.Number.String(), "hash", tmp_root.String())
 	//}
 
 	// do epoch thing at the end, because it will update active validators
@@ -1202,7 +1202,7 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 		}
 	}
 	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash5", "hash", tmp_root.String())
+	log.Error("FinalizeAndAssemble root hash5", "block", header.Number.String(), "hash", tmp_root.String())
 
 	//handle system governance Proposal
 	//
