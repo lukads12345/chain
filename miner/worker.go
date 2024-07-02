@@ -890,8 +890,6 @@ LOOP:
 		w.current.state.Prepare(tx.Hash(), common.Hash{}, w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
-		tmp_root := w.current.state.IntermediateRoot(true)
-		log.Info("commit Trx root hash ", "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trxhash", tx.Hash().String())
 
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
@@ -1030,10 +1028,14 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		//}
 		// Could potentially happen if starting to mine in an odd state.
 		err := w.makeCurrent(parent, header)
+		tmp_root := w.current.state.IntermediateRoot(true)
+		log.Info("first state root", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+
 		if err != nil {
 			log.Error("Failed to create mining context", "err", err)
 			return
 		}
+
 		// Create the current work task and check any fork transitions needed
 		env := w.current
 		//if w.chainConfig.DAOForkSupport && w.chainConfig.DAOForkBlock != nil && w.chainConfig.DAOForkBlock.Cmp(header.Number) == 0 {
@@ -1056,6 +1058,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
 			w.commit(uncles, nil, false, tstart)
 		}
+		tmp_root = w.current.state.IntermediateRoot(true)
+		log.Info("first state root1", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 		// Create por challenge transaction
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
 			nonceDiff := uint64(0)

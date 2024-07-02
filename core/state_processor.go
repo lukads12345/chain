@@ -76,6 +76,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	blockContext := NewEVMBlockContext(header, p.bc, nil)
 	vmenv := vm.NewEVM(blockContext, vm.TxContext{}, statedb, p.config, cfg)
 
+	tmp_root := statedb.IntermediateRoot(true)
+	log.Info("apply first state root", "block", header.Number.String(), "hash", tmp_root.String())
 	// Iterate over and process the individual transactions
 	posa, isPoSA := p.engine.(consensus.PoSA)
 	if isPoSA {
@@ -87,6 +89,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// usually do have two tx, one for validator set contract, another for system reward contract.
 	systemTxs := make([]*types.Transaction, 0, 2)
 	signer := types.MakeSigner(p.config, header.Number)
+	tmp_root = statedb.IntermediateRoot(true)
+	log.Info("apply first state root1", "block", header.Number.String(), "hash", tmp_root.String())
 	for i, tx := range block.Transactions() {
 		if isPoSA {
 			if isSystemTx, err := posa.IsSystemTransaction(tx, block.Header()); err != nil {
@@ -106,8 +110,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
-		tmp_root := statedb.IntermediateRoot(true)
-		log.Info("apply block commit Trx root hash ", "block", header.Number.String(), "hash", tmp_root.String(), "trxhash", tx.Hash().String())
 
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
