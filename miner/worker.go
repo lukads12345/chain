@@ -566,6 +566,7 @@ func (w *worker) mainLoop() {
 				txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs)
 				tcount := w.current.tcount
 				w.commitTransactions(txset, coinbase, nil)
+
 				// Only update the snapshot if any new transactons were added
 				// to the pending block
 				if tcount != w.current.tcount {
@@ -889,6 +890,9 @@ LOOP:
 		w.current.state.Prepare(tx.Hash(), common.Hash{}, w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
+		tmp_root := w.current.state.IntermediateRoot(true)
+		log.Info("commit Trx root hash ", "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trxhash", tx.Hash().String())
+
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
 			// Pop the current out-of-gas transaction without shifting in the next from the account
@@ -1090,6 +1094,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					if w.commitTransactions(txs, w.coinbase, interrupt) {
 						return
 					}
+
 					w.porWork.AddLock(header.Coinbase)
 					w.porWork.ChallengeChan <- challengeTask{Seed: seed, Provider: provider, SeedSignature: hex.EncodeToString(seedSignature), TaskBlockNumber: header.Number.Uint64(), TransactionHash: tx.Hash(), Validator: realMiner}
 
@@ -1110,6 +1115,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 				if err == nil {
 
 					tTxs = append(tTxs, tx)
+
 					nonceDiff++
 				}
 

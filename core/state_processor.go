@@ -17,6 +17,7 @@
 package core
 
 import (
+	"PureChain/log"
 	"fmt"
 
 	"PureChain/common"
@@ -105,6 +106,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
+		tmp_root := statedb.IntermediateRoot(true)
+		log.Info("apply block commit Trx root hash ", "block", header.Number.String(), "hash", tmp_root.String(), "trxhash", tx.Hash().String())
+
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
