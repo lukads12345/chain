@@ -99,6 +99,27 @@ type environment struct {
 	receipts []*types.Receipt
 }
 
+func (env *environment) copy() *environment {
+	cpy := &environment{
+		signer:    env.signer,
+		state:     env.state.Copy(),
+		tcount:    env.tcount,
+		ancestors: env.ancestors.Clone(),
+		family:    env.family.Clone(),
+		uncles:    env.uncles.Clone(),
+		header:    types.CopyHeader(env.header),
+		receipts:  copyReceipts(env.receipts),
+	}
+	if env.gasPool != nil {
+		gasPool := *env.gasPool
+		cpy.gasPool = &gasPool
+	}
+	cpy.txs = make([]*types.Transaction, len(env.txs))
+	copy(cpy.txs, env.txs)
+
+	return cpy
+}
+
 // task contains all information for consensus engine sealing and result submitting.
 type task struct {
 	receipts  []*types.Receipt
@@ -1146,7 +1167,8 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 	//fmt.Println("commit",w.current.header.Extra)
 
 	if w.isRunning() {
-		s := w.current.state.Copy()
+
+		s := w.current.state
 		block, receipts, err := w.engine.FinalizeAndAssemble(w.chain, types.CopyHeader(w.current.header), s, w.current.txs, uncles, w.current.receipts)
 		if err != nil {
 			return err
@@ -1154,9 +1176,9 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 		if interval != nil {
 			interval()
 		}
-
+		env := w.current.copy()
 		select {
-		case w.taskCh <- &task{receipts: receipts, state: s, block: block, createdAt: time.Now()}:
+		case w.taskCh <- &task{receipts: receipts, state: env.state, block: block, createdAt: time.Now()}:
 			w.unconfirmed.Shift(block.NumberU64() - 1)
 			log.Info("Commit new mining work", "number", block.Number(), "sealhash", w.engine.SealHash(block.Header()),
 				"uncles", len(uncles), "txs", w.current.tcount,
