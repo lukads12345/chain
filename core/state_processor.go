@@ -91,7 +91,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	signer := types.MakeSigner(p.config, header.Number)
 	tmp_root = statedb.IntermediateRoot(true)
 	log.Info("apply first state root1", "block", header.Number.String(), "hash", tmp_root.String())
-	is_first := 10
+	is_first := true
 	for i, tx := range block.Transactions() {
 		if isPoSA {
 			if isSystemTx, err := posa.IsSystemTransaction(tx, block.Header()); err != nil {
@@ -111,8 +111,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
-		if is_first > 0 {
-			is_first = is_first - 1
+		if is_first {
+			//is_first = is_first - 1
 			tmp_root = statedb.IntermediateRoot(true)
 			log.Info("apply first transaction root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 		}
