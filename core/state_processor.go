@@ -160,7 +160,7 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 	}
 	if len(msg.Data()) > 0 {
 		tmp_root := statedb.IntermediateRoot(true)
-		log.Info("applyTransaction internal root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+		log.Info("applyTransaction internal root2", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
 	}
 	// Update the state with pending changes.
