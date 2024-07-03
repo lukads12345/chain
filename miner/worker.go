@@ -824,7 +824,7 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 		log.Debug("Time left for mining work", "left", (*delay - w.config.DelayLeftOver).String(), "leftover", w.config.DelayLeftOver)
 		defer stopTimer.Stop()
 	}
-	is_first := false
+	is_first := true
 LOOP:
 	for {
 		// In the following three cases, we will interrupt the execution of the transaction.
