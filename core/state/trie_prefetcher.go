@@ -43,9 +43,9 @@ type triePrefetcher struct {
 	fetches  map[common.Hash]Trie        // Partially or fully fetcher tries
 	fetchers map[common.Hash]*subfetcher // Subfetchers for each trie
 
-	abortChan chan *subfetcher
-	closeChan chan struct{}
-
+	abortChan         chan *subfetcher
+	closeChan         chan struct{}
+	fetchersMutex     sync.RWMutex
 	deliveryMissMeter metrics.Meter
 	accountLoadMeter  metrics.Meter
 	accountDupMeter   metrics.Meter
@@ -111,26 +111,31 @@ func (p *triePrefetcher) close() {
 				p.accountLoadMeter.Mark(int64(len(fetcher.seen)))
 				p.accountDupMeter.Mark(int64(fetcher.dups))
 				p.accountSkipMeter.Mark(int64(len(fetcher.tasks)))
-
+				fetcher.lock.Lock()
 				for _, key := range fetcher.used {
 					delete(fetcher.seen, string(key))
 				}
+				fetcher.lock.Unlock()
 				p.accountWasteMeter.Mark(int64(len(fetcher.seen)))
 			} else {
 				p.storageLoadMeter.Mark(int64(len(fetcher.seen)))
 				p.storageDupMeter.Mark(int64(fetcher.dups))
 				p.storageSkipMeter.Mark(int64(len(fetcher.tasks)))
-
+				fetcher.lock.Lock()
 				for _, key := range fetcher.used {
 					delete(fetcher.seen, string(key))
 				}
+				fetcher.lock.Unlock()
 				p.storageWasteMeter.Mark(int64(len(fetcher.seen)))
 			}
 		}
 	}
 	close(p.closeChan)
 	// Clear out all fetchers (will crash on a second call, deliberate)
+
+	p.fetchersMutex.Lock()
 	p.fetchers = nil
+	p.fetchersMutex.Unlock()
 }
 
 // copy creates a deep-but-inactive copy of the trie prefetcher. Any trie data
@@ -138,6 +143,7 @@ func (p *triePrefetcher) close() {
 // is mostly used in the miner which creates a copy of it's actively mutated
 // state to be sealed while it may further mutate the state.
 func (p *triePrefetcher) copy() *triePrefetcher {
+	p.fetchersMutex.RLock()
 	copy := &triePrefetcher{
 		db:      p.db,
 		root:    p.root,
@@ -164,6 +170,7 @@ func (p *triePrefetcher) copy() *triePrefetcher {
 	for root, fetcher := range p.fetchers {
 		copy.fetches[root] = fetcher.peek()
 	}
+	p.fetchersMutex.RUnlock()
 	return copy
 }
 
@@ -177,7 +184,10 @@ func (p *triePrefetcher) prefetch(root common.Hash, keys [][]byte, accountHash c
 	fetcher := p.fetchers[root]
 	if fetcher == nil {
 		fetcher = newSubfetcher(p.db, root, accountHash)
+		p.fetchersMutex.Lock()
 		p.fetchers[root] = fetcher
+		p.fetchersMutex.Unlock()
+
 	}
 	fetcher.schedule(keys)
 }
@@ -195,7 +205,9 @@ func (p *triePrefetcher) trie(root common.Hash) Trie {
 		return p.db.CopyTrie(trie)
 	}
 	// Otherwise the prefetcher is active, bail if no trie was prefetched for this root
+	p.fetchersMutex.RLock()
 	fetcher := p.fetchers[root]
+	p.fetchersMutex.RUnlock()
 	if fetcher == nil {
 		p.deliveryMissMeter.Mark(1)
 		return nil
@@ -215,9 +227,13 @@ func (p *triePrefetcher) trie(root common.Hash) Trie {
 // used marks a batch of state items used to allow creating statistics as to
 // how useful or wasteful the prefetcher is.
 func (p *triePrefetcher) used(root common.Hash, used [][]byte) {
+	p.fetchersMutex.RLock()
 	if fetcher := p.fetchers[root]; fetcher != nil {
+		fetcher.lock.Lock()
 		fetcher.used = used
+		fetcher.lock.Unlock()
 	}
+	p.fetchersMutex.RUnlock()
 }
 
 // subfetcher is a trie fetcher goroutine responsible for pulling entries for a
