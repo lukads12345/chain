@@ -824,7 +824,7 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 		log.Debug("Time left for mining work", "left", (*delay - w.config.DelayLeftOver).String(), "leftover", w.config.DelayLeftOver)
 		defer stopTimer.Stop()
 	}
-	is_first := true
+	is_first := 10
 LOOP:
 	for {
 		// In the following three cases, we will interrupt the execution of the transaction.
@@ -891,8 +891,8 @@ LOOP:
 		w.current.state.Prepare(tx.Hash(), common.Hash{}, w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
-		if is_first {
-			is_first = false
+		if is_first > 0 {
+			is_first = is_first - 1
 			tmp_root := w.current.state.IntermediateRoot(true)
 			log.Info("first transaction exec root", "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
