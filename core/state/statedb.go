@@ -972,6 +972,7 @@ func (s *StateDB) Finalise(deleteEmptyObjects bool) {
 	//}
 	prefetcher := s.prefetcher
 	if prefetcher != nil && len(addressesToPrefetch) > 0 {
+
 		prefetcher.prefetch(s.originalRoot, addressesToPrefetch, emptyAddr)
 	}
 	// Invalidate journal because reverting across transactions is not allowed.

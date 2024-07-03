@@ -21,9 +21,6 @@ import (
 	"PureChain/consensus"
 	"PureChain/log"
 	"fmt"
-	"github.com/status-im/keycard-go/hexutils"
-	"strconv"
-
 	//"PureChain/consensus/misc"
 	"PureChain/core/state"
 	//"PureChain/core/systemcontracts"
@@ -113,16 +110,16 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 
-		if len(msg.Data()) > 0 {
-			msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
-			log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
-
-		}
+		//if len(msg.Data()) > 0 {
+		//	msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
+		//	log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+		//
+		//}
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
 		if is_first && len(tx.Data()) > 0 {
 			//is_first = is_first - 1
 			tmp_root = statedb.IntermediateRoot(true)
-			log.Info("apply first transaction root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+			log.Info("apply first transaction root1", "index", i, "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 		}
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
@@ -210,10 +207,10 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 		vm.EVMInterpreterPool.Put(ite)
 		vm.EvmPool.Put(vmenv)
 	}()
-	if len(msg.Data()) > 0 {
-		msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
-		log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
-
-	}
+	//if len(msg.Data()) > 0 {
+	//	msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
+	//	log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+	//
+	//}
 	return applyTransaction(msg, config, bc, author, gp, statedb, header, tx, usedGas, vmenv)
 }
