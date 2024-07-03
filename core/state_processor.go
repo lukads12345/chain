@@ -19,6 +19,7 @@ package core
 import (
 	"PureChain/log"
 	"fmt"
+	"strconv"
 
 	"PureChain/common"
 	"PureChain/consensus"
@@ -110,6 +111,10 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		msg, err := tx.AsMessage(signer)
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
+
+		msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " nonce" + strconv.FormatUint(msg.Nonce(), 10)
+		log.Info("worker ApplyTransaction", "index", i, "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
 		if is_first {
 			//is_first = is_first - 1
@@ -198,5 +203,7 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 		vm.EVMInterpreterPool.Put(ite)
 		vm.EvmPool.Put(vmenv)
 	}()
+	msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " nonce" + strconv.FormatUint(msg.Nonce(), 10)
+	log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
 	return applyTransaction(msg, config, bc, author, gp, statedb, header, tx, usedGas, vmenv)
 }

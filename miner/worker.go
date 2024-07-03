@@ -894,7 +894,7 @@ LOOP:
 		if is_first {
 			//is_first = is_first - 1
 			tmp_root := w.current.state.IntermediateRoot(true)
-			log.Info("first transaction exec root", "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+			log.Info("first transaction exec root", "tcount", w.current.tcount, "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
 		}
 		switch {
