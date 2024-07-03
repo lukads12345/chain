@@ -21,6 +21,9 @@ import (
 	"PureChain/consensus"
 	"PureChain/log"
 	"fmt"
+	"github.com/status-im/keycard-go/hexutils"
+	"strconv"
+
 	//"PureChain/consensus/misc"
 	"PureChain/core/state"
 	//"PureChain/core/systemcontracts"
@@ -90,7 +93,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	signer := types.MakeSigner(p.config, header.Number)
 	tmp_root = statedb.IntermediateRoot(true)
 	log.Info("apply first state root1", "block", header.Number.String(), "hash", tmp_root.String())
-	//is_first := true
+	is_first := true
 	for i, tx := range block.Transactions() {
 		if isPoSA {
 			if isSystemTx, err := posa.IsSystemTransaction(tx, block.Header()); err != nil {
@@ -110,15 +113,17 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		statedb.Prepare(tx.Hash(), block.Hash(), i)
 
-		//msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " nonce" + strconv.FormatUint(msg.Nonce(), 10)
-		//log.Info("worker ApplyTransaction", "index", i, "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+		if len(msg.Data()) > 0 {
+			msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
+			log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
 
+		}
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
-		//if is_first {
-		//	//is_first = is_first - 1
-		//	tmp_root = statedb.IntermediateRoot(true)
-		//	log.Info("apply first transaction root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
-		//}
+		if is_first && len(tx.Data()) > 0 {
+			//is_first = is_first - 1
+			tmp_root = statedb.IntermediateRoot(true)
+			log.Info("apply first transaction root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+		}
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
@@ -143,13 +148,21 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 	// Create a new context to be used in the EVM environment.
 	txContext := NewEVMTxContext(msg)
 	evm.Reset(txContext, statedb)
+	if len(msg.Data()) > 0 {
+		tmp_root := statedb.IntermediateRoot(true)
+		log.Info("applyTransaction internal root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
+	}
 	// Apply the transaction to the current state (included in the env).
 	result, err := ApplyMessage(evm, msg, gp)
 	if err != nil {
 		return nil, err
 	}
+	if len(msg.Data()) > 0 {
+		tmp_root := statedb.IntermediateRoot(true)
+		log.Info("applyTransaction internal root1", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
+	}
 	// Update the state with pending changes.
 	var root []byte
 	if config.IsByzantium(header.Number) {
@@ -201,7 +214,10 @@ func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *commo
 		vm.EVMInterpreterPool.Put(ite)
 		vm.EvmPool.Put(vmenv)
 	}()
-	//msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " nonce" + strconv.FormatUint(msg.Nonce(), 10)
-	//log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+	if len(msg.Data()) > 0 {
+		msg_str := "from " + msg.From().String() + " to:" + msg.To().String() + " gasPrice" + msg.GasPrice().String() + " Data" + hexutils.BytesToHex(msg.Data()) + " value:" + msg.Value().String()
+		log.Info("worker ApplyTransaction", "msg", msg_str, "gp", gp.String(), "header", header.Number.String(), "usedGas", strconv.FormatUint(*usedGas, 10))
+
+	}
 	return applyTransaction(msg, config, bc, author, gp, statedb, header, tx, usedGas, vmenv)
 }

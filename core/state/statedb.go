@@ -1007,7 +1007,7 @@ func (s *StateDB) IntermediateRoot(deleteEmptyObjects bool) common.Hash {
 	finishCh := make(chan struct{})
 	defer close(finishCh)
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1; i++ {
+	for i := 0; i < runtime.NumCPU(); i++ {
 		go func() {
 			for {
 				select {
