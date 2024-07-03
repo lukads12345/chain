@@ -824,6 +824,7 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 		log.Debug("Time left for mining work", "left", (*delay - w.config.DelayLeftOver).String(), "leftover", w.config.DelayLeftOver)
 		defer stopTimer.Stop()
 	}
+	is_first := false
 LOOP:
 	for {
 		// In the following three cases, we will interrupt the execution of the transaction.
@@ -890,7 +891,12 @@ LOOP:
 		w.current.state.Prepare(tx.Hash(), common.Hash{}, w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
+		if is_first {
+			is_first = false
+			tmp_root := w.current.state.IntermediateRoot(true)
+			log.Info("first transaction exec root", "block", w.current.header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
 
+		}
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
 			// Pop the current out-of-gas transaction without shifting in the next from the account
@@ -1083,7 +1089,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					tmp_root = w.current.state.IntermediateRoot(true)
 					log.Info("first state root4", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
-					if w.commitTransactions(txs, w.coinbase, interrupt) {
+					if w.commitTransactions(txs, header.Coinbase, interrupt) {
 						return
 					}
 					tmp_root = w.current.state.IntermediateRoot(true)
@@ -1102,7 +1108,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					log.Info("first state root6", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
 
-					if w.commitTransactions(txs, w.coinbase, interrupt) {
+					if w.commitTransactions(txs, header.Coinbase, interrupt) {
 						return
 					}
 					tmp_root = w.current.state.IntermediateRoot(true)
@@ -1168,7 +1174,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 
 				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, localTxs)
 
-				if w.commitTransactions(txs, w.coinbase, interrupt) {
+				if w.commitTransactions(txs, header.Coinbase, interrupt) {
 					return
 				}
 				tmp_root = w.current.state.IntermediateRoot(true)
@@ -1180,7 +1186,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 				log.Info("first state root challenge finish 13", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, remoteTxs)
-				if w.commitTransactions(txs, w.coinbase, interrupt) {
+				if w.commitTransactions(txs, header.Coinbase, interrupt) {
 					return
 				}
 				tmp_root = w.current.state.IntermediateRoot(true)
