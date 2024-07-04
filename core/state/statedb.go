@@ -617,10 +617,11 @@ func (s *StateDB) preloadStateObject(address []common.Address) []*StateObject {
 				continue
 			}
 			data := &Account{
-				Nonce:    acc.Nonce,
-				Balance:  acc.Balance,
-				CodeHash: acc.CodeHash,
-				Root:     common.BytesToHash(acc.Root),
+				Nonce:       acc.Nonce,
+				Balance:     acc.Balance,
+				LockBalance: acc.LockBalance,
+				CodeHash:    acc.CodeHash,
+				Root:        common.BytesToHash(acc.Root),
 			}
 			if len(data.CodeHash) == 0 {
 				data.CodeHash = emptyCodeHash
