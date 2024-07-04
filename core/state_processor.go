@@ -89,8 +89,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	systemTxs := make([]*types.Transaction, 0, 2)
 	signer := types.MakeSigner(p.config, header.Number)
 	tmp_root = statedb.IntermediateRoot(true)
-	log.Info("apply first state root1", "block", header.Number.String(), "hash", tmp_root.String())
-	is_first := true
+	//log.Info("apply first state root1", "block", header.Number.String(), "hash", tmp_root.String())
+	//is_first := true
 	for i, tx := range block.Transactions() {
 		if isPoSA {
 			if isSystemTx, err := posa.IsSystemTransaction(tx, block.Header()); err != nil {
@@ -116,11 +116,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		//
 		//}
 		receipt, err := applyTransaction(msg, p.config, p.bc, nil, gp, statedb, header, tx, usedGas, vmenv)
-		if is_first && len(tx.Data()) > 0 {
-			//is_first = is_first - 1
-			tmp_root = statedb.IntermediateRoot(true)
-			log.Info("apply first transaction root1", "index", i, "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
-		}
+		//if is_first && len(tx.Data()) > 0 {
+		//	//is_first = is_first - 1
+		//	tmp_root = statedb.IntermediateRoot(true)
+		//	log.Info("apply first transaction root1", "index", i, "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+		//}
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
@@ -151,11 +151,11 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 	if err != nil {
 		return nil, err
 	}
-	if len(msg.Data()) > 0 {
-		tmp_root := statedb.IntermediateRoot(true)
-		log.Info("applyTransaction internal root2", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
-
-	}
+	//if len(msg.Data()) > 0 {
+	//	tmp_root := statedb.IntermediateRoot(true)
+	//	log.Info("applyTransaction internal root2", "block", header.Number.String(), "hash", tmp_root.String(), "trx_hash", tx.Hash().String())
+	//
+	//}
 	// Update the state with pending changes.
 	var root []byte
 	if config.IsByzantium(header.Number) {
