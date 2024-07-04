@@ -901,18 +901,18 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			return err
 		}
 	}
-	tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash1", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("finalize root hash1", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.tryPunishValidator(chain, header, state); err != nil {
 		return err
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash2", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("finalize root hash2", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.punishProvider(chain, header, state); err != nil {
 		return err
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash3", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("finalize root hash3", "block", header.Number.String(), "hash", tmp_root.String())
 	/*
 		if header.Difficulty.Cmp(diffInTurn) != 0 {
 			if err := p.tryPunishValidator(chain, header, state); err != nil {
@@ -936,8 +936,8 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			return err
 		}
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash4", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("finalize root hash4", "block", header.Number.String(), "hash", tmp_root.String())
 	//}
 
 	// warn if not in majority fork
@@ -977,8 +977,8 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 			return errMismatchingEpochValidators
 		}
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("finalize root hash5", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("finalize root hash5", "block", header.Number.String(), "hash", tmp_root.String())
 	// No block rewards in PoA, so the state remains as is and uncles are dropped
 	//cx := chainContext{Chain: chain, dpos: p}
 	//if header.Number.Cmp(common.Big1) == 0 {
