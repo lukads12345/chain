@@ -1034,8 +1034,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		//}
 		// Could potentially happen if starting to mine in an odd state.
 		err := w.makeCurrent(parent, header)
-		tmp_root := w.current.state.IntermediateRoot(true)
-		log.Info("first state root", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+		//tmp_root := w.current.state.IntermediateRoot(true)
+		//log.Info("first state root", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 		if err != nil {
 			log.Error("Failed to create mining context", "err", err)
@@ -1064,8 +1064,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 		if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
 			w.commit(uncles, nil, false, tstart)
 		}
-		tmp_root = w.current.state.IntermediateRoot(true)
-		log.Info("first state root1", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+		//tmp_root = w.current.state.IntermediateRoot(true)
+		//log.Info("first state root1", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 		// Create por challenge transaction
 		if dpos, ok := w.engine.(*dpos.Dpos); ok {
 			nonceDiff := uint64(0)
@@ -1076,24 +1076,24 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 				log.Error("Failed to fetch pending transactions", "err", err)
 			}
 			if w.porWork.CanLock(header.Coinbase) && len(w.challengeCh) == 0 && len(tPending[header.Coinbase]) == 0 {
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root2", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root2", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 				tx, seed, provider, err, trxType := dpos.TryCreateChallenge(w.chain, header, env.state)
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root3", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root3", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 				if err == nil && trxType == 2 {
 					consTxs := make(map[common.Address]types.Transactions)
 					tTxs := make(types.Transactions, 0, 0)
 					tTxs = append(tTxs, tx)
 					consTxs[realMiner] = tTxs
-					tmp_root = w.current.state.IntermediateRoot(true)
-					log.Info("first state root4", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+					//tmp_root = w.current.state.IntermediateRoot(true)
+					//log.Info("first state root4", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
 					if w.commitTransactions(txs, header.Coinbase, interrupt) {
 						return
 					}
-					tmp_root = w.current.state.IntermediateRoot(true)
-					log.Info("first state root5", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+					//tmp_root = w.current.state.IntermediateRoot(true)
+					//log.Info("first state root5", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					nonceDiff++
 				} else if err == nil && trxType == 1 {
 					seedSignature, err := dpos.SignSeed(header, seed)
@@ -1104,15 +1104,15 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					tTxs := make(types.Transactions, 0, 0)
 					tTxs = append(tTxs, tx)
 					consTxs[realMiner] = tTxs
-					tmp_root = w.current.state.IntermediateRoot(true)
-					log.Info("first state root6", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+					//tmp_root = w.current.state.IntermediateRoot(true)
+					//log.Info("first state root6", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					txs := types.NewTransactionsByPriceAndNonce(w.current.signer, consTxs)
 
 					if w.commitTransactions(txs, header.Coinbase, interrupt) {
 						return
 					}
-					tmp_root = w.current.state.IntermediateRoot(true)
-					log.Info("first state root7", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+					//tmp_root = w.current.state.IntermediateRoot(true)
+					//log.Info("first state root7", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 					w.porWork.AddLock(header.Coinbase)
 					w.porWork.ChallengeChan <- challengeTask{Seed: seed, Provider: provider, SeedSignature: hex.EncodeToString(seedSignature), TaskBlockNumber: header.Number.Uint64(), TransactionHash: tx.Hash(), Validator: realMiner}
 
@@ -1128,8 +1128,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 					break
 				}
 				oneData := <-w.challengeCh
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge finish 8", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge finish 8", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 				tx, err := dpos.CreateChallengeFinish(oneData.Validator, oneData.Provider, oneData.Seed, oneData.challengeAmount, oneData.rootHash, oneData.challengeState, nonceDiff, env.state, header)
 				if err == nil {
 
@@ -1137,8 +1137,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 
 					nonceDiff++
 				}
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge finish 9", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge finish 9", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 			}
 			if len(tTxs) > 0 {
@@ -1146,8 +1146,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 				w.eth.TxPool().AddLocals(tTxs)
 
 			}
-			tmp_root = w.current.state.IntermediateRoot(true)
-			log.Info("first state root challenge finish 10", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+			//tmp_root = w.current.state.IntermediateRoot(true)
+			//log.Info("first state root challenge finish 10", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 		}
 
@@ -1169,28 +1169,28 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			}
 
 			if len(localTxs) > 0 {
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge 11", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge 11", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, localTxs)
 
 				if w.commitTransactions(txs, header.Coinbase, interrupt) {
 					return
 				}
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge 12", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge 12", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 			}
 			if len(remoteTxs) > 0 {
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge finish 13", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge finish 13", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 				txs := types.NewTransactionsByPriceAndNonce(w.current.signer, remoteTxs)
 				if w.commitTransactions(txs, header.Coinbase, interrupt) {
 					return
 				}
-				tmp_root = w.current.state.IntermediateRoot(true)
-				log.Info("first state root challenge finish 14", "block", w.current.header.Number.String(), "hash", tmp_root.String())
+				//tmp_root = w.current.state.IntermediateRoot(true)
+				//log.Info("first state root challenge finish 14", "block", w.current.header.Number.String(), "hash", tmp_root.String())
 
 			}
 			commitTxsTimer.UpdateSince(start)

@@ -1171,27 +1171,27 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 			panic(err)
 		}
 	}
-	tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash1", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root := state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("FinalizeAndAssemble root hash1", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.tryPunishValidator(chain, header, state); err != nil {
 
 		panic(err)
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash2", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("FinalizeAndAssemble root hash2", "block", header.Number.String(), "hash", tmp_root.String())
 	if err := p.punishProvider(chain, header, state); err != nil {
 		panic(err)
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash3", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("FinalizeAndAssemble root hash3", "block", header.Number.String(), "hash", tmp_root.String())
 	if header.Number.Cmp(common.Big3) > 0 {
 		if err := p.trySendBlockReward(chain, header, state); err != nil {
 
 			panic(err)
 		}
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash4", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("FinalizeAndAssemble root hash4", "block", header.Number.String(), "hash", tmp_root.String())
 	//}
 
 	// do epoch thing at the end, because it will update active validators
@@ -1201,8 +1201,8 @@ func (p *Dpos) FinalizeAndAssemble(chain consensus.ChainHeaderReader, header *ty
 			panic(err)
 		}
 	}
-	tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
-	log.Error("FinalizeAndAssemble root hash5", "block", header.Number.String(), "hash", tmp_root.String())
+	//tmp_root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
+	//log.Error("FinalizeAndAssemble root hash5", "block", header.Number.String(), "hash", tmp_root.String())
 
 	//handle system governance Proposal
 	//
