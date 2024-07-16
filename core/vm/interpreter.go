@@ -44,7 +44,8 @@ type Config struct {
 	EWASMInterpreter string // External EWASM interpreter options
 	EVMInterpreter   string // External EVM interpreter options
 
-	ExtraEips []int // Additional EIPS that are to be enabled
+	ExtraEips      []int // Additional EIPS that are to be enabled
+	IsSkipProvider bool  // stateat skip provider check
 }
 
 // Interpreter is used to run Ethereum based contracts and will utilise the

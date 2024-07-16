@@ -705,7 +705,7 @@ func (p *Parlia) Prepare(chain consensus.ChainHeaderReader, header *types.Header
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given.
 func (p *Parlia) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs *[]*types.Transaction,
-	uncles []*types.Header, receipts *[]*types.Receipt, systemTxs *[]*types.Transaction, usedGas *uint64) error {
+	uncles []*types.Header, receipts *[]*types.Receipt, systemTxs *[]*types.Transaction, usedGas *uint64, _ bool) error {
 	// Initialize all system contracts at block 1.
 	if header.Number.Cmp(common.Big1) == 0 {
 		if err := p.initializeSystemContracts(chain, header, state); err != nil {
@@ -1537,11 +1537,12 @@ func (p *Parlia) getBlacklist(header *types.Header, parentState *state.StateDB) 
 }
 
 // Since the state variables are as follow:
-//    bool public initialized;
-//    bool public enabled;
-//    address public admin;
-//    address public pendingAdmin;
-//    mapping(address => bool) private devs;
+//
+//	bool public initialized;
+//	bool public enabled;
+//	address public admin;
+//	address public pendingAdmin;
+//	mapping(address => bool) private devs;
 //
 // according to [Layout of State Variables in Storage](https://docs.soliditylang.org/en/v0.8.4/internals/layout_in_storage.html),
 // and after optimizer enabled, the `initialized`, `enabled` and `admin` will be packed, and stores at slot 0,

@@ -893,7 +893,7 @@ func (p *Dpos) Prepare(chain consensus.ChainHeaderReader, header *types.Header) 
 // Finalize implements consensus.Engine, ensuring no uncles are set, nor block
 // rewards given.
 func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs *[]*types.Transaction,
-	uncles []*types.Header, receipts *[]*types.Receipt, systemTxs *[]*types.Transaction, usedGas *uint64) error {
+	uncles []*types.Header, receipts *[]*types.Receipt, systemTxs *[]*types.Transaction, usedGas *uint64, isSkip bool) error {
 	// Initialize all system contracts at block 1.
 	if header.Number.Cmp(common.Big1) == 0 {
 		if err := p.initializeSystemContracts(chain, header, state); err != nil {
@@ -1039,53 +1039,56 @@ func (p *Dpos) Finalize(chain consensus.ChainHeaderReader, header *types.Header,
 	if err != nil {
 		log.Error("get provider info failed", "error", err.Error())
 	}
+	if !isSkip {
+		tmpProvider := common.Address{}
+		totalVote := big.NewInt(0)
+		for _, k := range providerLuckyData {
+			totalVote.Add(totalVote, k.VotingPower)
+		}
+		if totalVote.Cmp(common.Big0) > 0 {
+			parentHeader := chain.GetHeaderByHash(header.ParentHash)
 
-	tmpProvider := common.Address{}
-	totalVote := big.NewInt(0)
-	for _, k := range providerLuckyData {
-		totalVote.Add(totalVote, k.VotingPower)
-	}
-	if totalVote.Cmp(common.Big0) > 0 {
-		parentHeader := chain.GetHeaderByHash(header.ParentHash)
-
-		if parentHeader != nil {
-			calRlp, err := rlp.EncodeToBytes([]interface{}{parentHeader.Root, header.ParentHash, parentHeader.Coinbase, parentHeader.Time})
-			if err != nil {
-				return err
-			}
-
-			calHash := crypto.Keccak256(calRlp)
-			magicNumber := big.NewInt(0).SetBytes(calHash)
-			magicNumber.Mod(magicNumber, totalVote)
-			currentVote := big.NewInt(0)
-			for _, v := range providerLuckyData {
-				currentVote.Add(currentVote, v.VotingPower)
-				if magicNumber.Cmp(currentVote) < 0 {
-					tmpProvider.SetBytes(v.ProviderAddress.Bytes())
-					log.Debug("Check provider", "header Number", header.Number.String(), "provider", v.ProviderAddress, "votepower", v.VotingPower, "currentVote", currentVote)
-					break
+			if parentHeader != nil {
+				calRlp, err := rlp.EncodeToBytes([]interface{}{parentHeader.Root, header.ParentHash, parentHeader.Coinbase, parentHeader.Time})
+				if err != nil {
+					return err
 				}
+
+				calHash := crypto.Keccak256(calRlp)
+				magicNumber := big.NewInt(0).SetBytes(calHash)
+				magicNumber.Mod(magicNumber, totalVote)
+				currentVote := big.NewInt(0)
+				for _, v := range providerLuckyData {
+					currentVote.Add(currentVote, v.VotingPower)
+					if magicNumber.Cmp(currentVote) < 0 {
+						tmpProvider.SetBytes(v.ProviderAddress.Bytes())
+						log.Debug("Check provider", "header Number", header.Number.String(), "provider", v.ProviderAddress, "votepower", v.VotingPower, "currentVote", currentVote)
+						break
+					}
+				}
+				if header.Provider.String() != tmpProvider.String() {
+					log.Error("invalid provider", "provider", header.Provider.String(), "expect provider", tmpProvider.String())
+					return errInvalidProvider
+				}
+
+			} else {
+				log.Debug("header not exist,skip verify", "header number", header.Number)
 			}
+		} else {
+			tmpProvider = common.Address{}
 			if header.Provider.String() != tmpProvider.String() {
 				log.Error("invalid provider", "provider", header.Provider.String(), "expect provider", tmpProvider.String())
 				return errInvalidProvider
 			}
 
-		} else {
-			log.Debug("header not exist,skip verify", "header number", header.Number)
+		}
+		if header.TeamRate != realTeamRate || header.ValidatorRate != realValRate {
+			return errInvalidDistributeRate
 		}
 	} else {
-		tmpProvider = common.Address{}
-		if header.Provider.String() != tmpProvider.String() {
-			log.Error("invalid provider", "provider", header.Provider.String(), "expect provider", tmpProvider.String())
-			return errInvalidProvider
-		}
-
+		log.Info("skip state unused check!")
 	}
 
-	if header.TeamRate != realTeamRate || header.ValidatorRate != realValRate {
-		return errInvalidDistributeRate
-	}
 	//if header.Difficulty.Cmp(diffInTurn) != 0 {
 	//		spoiledVal := snap.supposeValidator()
 	//		signedRecently := false
@@ -1801,29 +1804,7 @@ func (p *Dpos) getProviderInfo(chain consensus.ChainHeaderReader, header *types.
 	if err != nil {
 		return []VoteInfo{}, err
 	}
-	//if ProviderFactoryAddr == (common.Address{}) {
-	//	method := "providerFactory"
-	//	data, err := p.abi[systemcontract.ValidatorFactoryContractName].Pack(method)
-	//	if err != nil {
-	//		log.Error("Can't pack data for providerFactory", "error", err)
-	//		return []VoteInfo{}, err
-	//	}
-	//
-	//	msg := types.NewMessage(header.Coinbase, systemcontract.GetValidatorAddr(parent.Number, p.chainConfig), 0, new(big.Int), math.MaxUint64, new(big.Int), data, nil, false)
-	//	result, err := vmcaller.ExecuteMsg(msg, statedb, parent, newChainContext(chain, p), p.chainConfig)
-	//	if err != nil {
-	//		return []VoteInfo{}, err
-	//	}
-	//	ret, err := p.abi[systemcontract.ValidatorFactoryContractName].Unpack(method, result)
-	//	if err != nil {
-	//		return []VoteInfo{}, err
-	//	}
-	//	ProviderFactoryAddr = ret[0].(common.Address)
-	//
-	//}
-	//if ProviderFactoryAddr == (common.Address{}) {
-	//	return []VoteInfo{}, nil
-	//}
+
 	method := "getProviderInfo"
 	data, err := p.abi[systemcontract.ProviderFactoryContractName].Pack(method, big.NewInt(0), big.NewInt(0))
 	if err != nil {

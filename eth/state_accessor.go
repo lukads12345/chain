@@ -114,11 +114,14 @@ func (eth *Ethereum) stateAtBlock(block *types.Block, reexec uint64, base *state
 		if current = eth.blockchain.GetBlockByNumber(next); current == nil {
 			return nil, fmt.Errorf("block #%d not found", next)
 		}
-		_, _, _, err := eth.blockchain.Processor().Process(current, statedb, vm.Config{})
+		_, _, _, err := eth.blockchain.Processor().Process(current, statedb, vm.Config{IsSkipProvider: true})
+
 		if err != nil {
 			return nil, fmt.Errorf("processing block %d failed: %v", current.NumberU64(), err)
 		}
+
 		// Finalize the state so any modifications are written to the trie
+		statedb.Finalise(eth.blockchain.Config().IsEIP158(current.Number()))
 		root, err := statedb.Commit(eth.blockchain.Config().IsEIP158(current.Number()))
 		if err != nil {
 			return nil, err
