@@ -217,7 +217,7 @@ type Config struct {
 }
 
 // CreateConsensusEngine creates a consensus engine for the given chain configuration.
-func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, notify []string, noverify bool, db ethdb.Database, ee *ethapi.PublicBlockChainAPI, genesisHash common.Hash) consensus.Engine {
+func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, config *ethash.Config, iniConfig *inihash.Config, notify []string, noverify bool, db ethdb.Database, ee *ethapi.PublicBlockChainAPI, genesisHash common.Hash) consensus.Engine {
 	// If proof-of-authority is requested, set it up
 	if chainConfig.Clique != nil {
 		return clique.New(chainConfig.Clique, db)
@@ -236,6 +236,22 @@ func CreateConsensusEngine(stack *node.Node, chainConfig *params.ChainConfig, co
 		log.Warn("Ethash used in test mode")
 	case ethash.ModeShared:
 		log.Warn("Ethash used in shared mode")
+	}
+	if chainConfig.Inihash != nil {
+		engine := inihash.New(inihash.Config{
+			PowMode:          iniConfig.PowMode,
+			CacheDir:         stack.ResolvePath(iniConfig.CacheDir),
+			CachesInMem:      iniConfig.CachesInMem,
+			CachesOnDisk:     iniConfig.CachesOnDisk,
+			CachesLockMmap:   iniConfig.CachesLockMmap,
+			DatasetDir:       iniConfig.DatasetDir,
+			DatasetsInMem:    iniConfig.DatasetsInMem,
+			DatasetsOnDisk:   iniConfig.DatasetsOnDisk,
+			DatasetsLockMmap: iniConfig.DatasetsLockMmap,
+			NotifyFull:       iniConfig.NotifyFull,
+		}, notify, noverify)
+		engine.SetThreads(-1) // Disable CPU mining
+		return engine
 	}
 	engine := ethash.New(ethash.Config{
 		PowMode:          config.PowMode,
