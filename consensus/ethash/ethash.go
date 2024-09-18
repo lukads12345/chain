@@ -395,6 +395,7 @@ func MakeCache(block uint64, dir string) {
 
 // MakeDataset generates a new ethash dataset and optionally stores it to disk.
 func MakeDataset(block uint64, dir string) {
+	fmt.Println("MakeDataset\n\n\n\n")
 	d := dataset{epoch: block / epochLength}
 	d.generate(dir, math.MaxInt32, false, false)
 }
