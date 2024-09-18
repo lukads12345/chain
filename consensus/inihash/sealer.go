@@ -25,7 +25,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -55,7 +54,7 @@ var (
 // the block's difficulty requirements.
 func (inihash *Inihash) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
 	// If we're running a fake PoW, simply return a 0 nonce immediately
-	fmt.Println("inihash seal \n\n\n")
+
 	if inihash.config.PowMode == ModeFake || inihash.config.PowMode == ModeFullFake {
 		header := block.Header()
 		header.Nonce, header.MixDigest = types.BlockNonce{}, common.Hash{}
