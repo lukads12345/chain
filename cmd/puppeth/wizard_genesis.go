@@ -66,6 +66,10 @@ func (w *wizard) makeGenesis() {
 		// In case of ethash, we're pretty much done
 		genesis.Config.Ethash = new(params.EthashConfig)
 		genesis.ExtraData = make([]byte, 32)
+	case choice == "3":
+		// In case of inihash, we're pretty much done
+		genesis.Config.Inihash = new(params.InihashConfig)
+		genesis.ExtraData = make([]byte, 32)
 
 	case choice == "" || choice == "2":
 		// In the case of clique, configure the consensus parameters

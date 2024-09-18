@@ -351,19 +351,23 @@ func submitIndex(commitUrl string, index uint64, blockNumber uint64, seed uint64
 }
 
 func NewPorWorker(config *Config, chainConfig *params.ChainConfig, engine consensus.Engine, eth Backend, finishCh *chan ChallengeFinishData) *porWorker {
-	porWorker := &porWorker{
-		config:        config,
-		chainConfig:   chainConfig,
-		engine:        engine,
-		eth:           eth,
-		chain:         eth.BlockChain(),
-		ChallengeChan: make(chan challengeTask, 10),
-		exitCh:        make(chan struct{}),
-		FinishCh:      finishCh,
-		LockList:      sync.Map{},
+	if chainConfig.Dpos != nil {
+		porWorker := &porWorker{
+			config:        config,
+			chainConfig:   chainConfig,
+			engine:        engine,
+			eth:           eth,
+			chain:         eth.BlockChain(),
+			ChallengeChan: make(chan challengeTask, 10),
+			exitCh:        make(chan struct{}),
+			FinishCh:      finishCh,
+			LockList:      sync.Map{},
+		}
+		go porWorker.mainLoop()
+		return porWorker
 	}
-	go porWorker.mainLoop()
-	return porWorker
+	return nil
+
 }
 
 func queryReady(commitUrl string, blockNumber uint64, seed uint64) string {

@@ -135,7 +135,7 @@ web3._extend({
 		new web3._extend.Method({
 			name: 'submitWork',
 			call: 'ethash_submitWork',
-			params: 3,
+			params: 2,
 		}),
 		new web3._extend.Method({
 			name: 'submitHashrate',

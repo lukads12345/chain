@@ -128,15 +128,19 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	// Transfer mining-related config to the ethash config.
 	ethashConfig := config.Ethash
 	ethashConfig.NotifyFull = config.Miner.NotifyFull
-
+	inihashConfig := config.Inihash
+	inihashConfig.NotifyFull = config.Miner.NotifyFull
 	// Assemble the Ethereum object
 	chainDb, err := stack.OpenDatabaseWithFreezer("chaindata", config.DatabaseCache, config.DatabaseHandles, config.DatabaseFreezer, "eth/db/chaindata/", false)
 	if err != nil {
 		return nil, err
 	}
 	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlockWithOverride(chainDb, config.Genesis, config.OverrideBerlin)
-	chainConfig.Dpos.ChallengeCommitUrl = config.PorChallengeCommitUrl
-	chainConfig.Dpos.Por = config.Por
+	if chainConfig.Dpos != nil {
+		chainConfig.Dpos.ChallengeCommitUrl = config.PorChallengeCommitUrl
+		chainConfig.Dpos.Por = config.Por
+	}
+
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {
 		return nil, genesisErr
 	}

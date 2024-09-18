@@ -19,6 +19,7 @@ package ethconfig
 
 import (
 	"PureChain/consensus/dpos"
+	"PureChain/consensus/inihash"
 	"math/big"
 	"os"
 	"os/user"
@@ -177,7 +178,8 @@ type Config struct {
 	PorChallengeCommitUrl string
 	Por                   bool
 	// Ethash options
-	Ethash ethash.Config `toml:",omitempty"`
+	Ethash  ethash.Config  `toml:",omitempty"`
+	Inihash inihash.Config `toml:",omitempty"`
 
 	// Transaction pool options
 	TxPool core.TxPoolConfig

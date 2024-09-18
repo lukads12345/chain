@@ -127,6 +127,7 @@ func makedag(ctx *cli.Context) error {
 	if err != nil {
 		utils.Fatalf("Invalid block number: %v", err)
 	}
+	fmt.Println("xxxxdasdadasdasdasdasdas")
 	ethash.MakeDataset(block, args[1])
 
 	return nil

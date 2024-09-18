@@ -5542,7 +5542,7 @@ var methods = function () {
     var submitWork = new Method({
         name: 'submitWork',
         call: 'eth_submitWork',
-        params: 3
+        params: 2
     });
 
     var getWork = new Method({

@@ -267,7 +267,10 @@ func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus
 	if init {
 		worker.startCh <- struct{}{}
 	}
-	worker.porWork = NewPorWorker(config, chainConfig, engine, eth, &worker.challengeCh)
+	if chainConfig.Dpos != nil {
+		worker.porWork = NewPorWorker(config, chainConfig, engine, eth, &worker.challengeCh)
+	}
+
 	return worker
 }
 

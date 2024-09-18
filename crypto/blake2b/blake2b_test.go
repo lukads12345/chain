@@ -23,6 +23,9 @@ func fromHex(s string) []byte {
 }
 
 func TestHashes(t *testing.T) {
+	emptyData := make([]byte, 40)
+	has := Sum256(emptyData)
+	fmt.Println(hex.EncodeToString(has[:]))
 	defer func(sse4, avx, avx2 bool) {
 		useSSE4, useAVX, useAVX2 = sse4, avx, avx2
 	}(useSSE4, useAVX, useAVX2)
