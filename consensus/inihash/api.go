@@ -17,12 +17,10 @@
 package inihash
 
 import (
-	"errors"
-	"math/big"
-
 	"PureChain/common"
 	"PureChain/common/hexutil"
 	"PureChain/core/types"
+	"errors"
 )
 
 var errEthashStopped = errors.New("inihash stopped")
@@ -114,6 +112,6 @@ func (api *API) GetHashrate() uint64 {
 }
 
 // GetHashrate returns the current hashrate for local CPU miner and remote miner.
-func (api *API) GetBlockReward(number hexutil.Uint64) *big.Int {
-	return api.inihash.GetBlockReward(uint64(number))
+func (api *API) GetBlockReward(number hexutil.Uint64) string {
+	return api.inihash.GetBlockReward(uint64(number)).String()
 }
