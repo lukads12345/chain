@@ -18,6 +18,7 @@ package inihash
 
 import (
 	"errors"
+	"math/big"
 
 	"PureChain/common"
 	"PureChain/common/hexutil"
@@ -40,25 +41,25 @@ type API struct {
 //		result[2] - 32 bytes hex encoded boundary condition ("target"), 2^256/difficulty
 //		result[3] - hex encoded block number
 //	 result[4] - algo
-func (api *API) GetWork() ([5]string, error) {
+func (api *API) GetWork() ([4]string, error) {
 	if api.inihash.remote == nil {
-		return [5]string{}, errors.New("not supported")
+		return [4]string{}, errors.New("not supported")
 	}
 
 	var (
-		workCh = make(chan [5]string, 1)
+		workCh = make(chan [4]string, 1)
 		errc   = make(chan error, 1)
 	)
 	select {
 	case api.inihash.remote.fetchWorkCh <- &sealWork{errc: errc, res: workCh}:
 	case <-api.inihash.remote.exitCh:
-		return [5]string{}, errEthashStopped
+		return [4]string{}, errEthashStopped
 	}
 	select {
 	case work := <-workCh:
 		return work, nil
 	case err := <-errc:
-		return [5]string{}, err
+		return [4]string{}, err
 	}
 }
 
@@ -110,4 +111,9 @@ func (api *API) SubmitHashrate(rate hexutil.Uint64, id common.Hash) bool {
 // GetHashrate returns the current hashrate for local CPU miner and remote miner.
 func (api *API) GetHashrate() uint64 {
 	return uint64(api.inihash.Hashrate())
+}
+
+// GetHashrate returns the current hashrate for local CPU miner and remote miner.
+func (api *API) GetBlockReward(number hexutil.Uint64) *big.Int {
+	return api.inihash.GetBlockReward(uint64(number))
 }

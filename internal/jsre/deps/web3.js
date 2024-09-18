@@ -5544,6 +5544,11 @@ var methods = function () {
         call: 'eth_submitWork',
         params: 2
     });
+    var getBlockReward = new Method({
+        name: 'getBlockReward',
+        call: 'eth_getBlockReward',
+        params: 1
+    });
 
     var getWork = new Method({
         name: 'getWork',
@@ -5577,7 +5582,8 @@ var methods = function () {
         compileLLL,
         compileSerpent,
         submitWork,
-        getWork
+        getWork,
+        getBlockReward
     ];
 };
 

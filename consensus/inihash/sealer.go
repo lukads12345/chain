@@ -215,7 +215,7 @@ type remoteSealer struct {
 	works        map[common.Hash]*types.Block
 	rates        map[common.Hash]hashrate
 	currentBlock *types.Block
-	currentWork  [5]string
+	currentWork  [4]string
 	notifyCtx    context.Context
 	cancelNotify context.CancelFunc // cancels all notification requests
 	reqWG        sync.WaitGroup     // tracks notification request goroutines
@@ -259,7 +259,7 @@ type hashrate struct {
 // sealWork wraps a seal work package for remote sealer.
 type sealWork struct {
 	errc chan error
-	res  chan [5]string
+	res  chan [4]string
 }
 
 func startRemoteSealer(inihash *Inihash, urls []string, noverify bool) *remoteSealer {
@@ -374,10 +374,10 @@ func (s *remoteSealer) makeWork(block *types.Block) {
 		algo = common.Big1
 	}
 	s.currentWork[0] = hash.Hex()
-	s.currentWork[1] = common.BytesToHash(SeedHash(block.NumberU64())).Hex()
-	s.currentWork[2] = common.BytesToHash(new(big.Int).Div(two256, block.Difficulty()).Bytes()).Hex()
-	s.currentWork[3] = hexutil.EncodeBig(block.Number())
-	s.currentWork[4] = hexutil.EncodeBig(algo)
+	//s.currentWork[1] = common.BytesToHash(SeedHash(block.NumberU64())).Hex()
+	s.currentWork[1] = common.BytesToHash(new(big.Int).Div(two256, block.Difficulty()).Bytes()).Hex()
+	s.currentWork[2] = hexutil.EncodeBig(block.Number())
+	s.currentWork[3] = hexutil.EncodeBig(algo)
 
 	// Trace the seal work fetched by remote sealer.
 	s.currentBlock = block
@@ -404,7 +404,7 @@ func (s *remoteSealer) notifyWork() {
 	}
 }
 
-func (s *remoteSealer) sendNotification(ctx context.Context, url string, json []byte, work [5]string) {
+func (s *remoteSealer) sendNotification(ctx context.Context, url string, json []byte, work [4]string) {
 	defer s.reqWG.Done()
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(json))
@@ -421,7 +421,7 @@ func (s *remoteSealer) sendNotification(ctx context.Context, url string, json []
 	if err != nil {
 		s.inihash.config.Log.Warn("Failed to notify remote miner", "err", err)
 	} else {
-		s.inihash.config.Log.Trace("Notified remote miner", "miner", url, "hash", work[0], "target", work[2])
+		s.inihash.config.Log.Trace("Notified remote miner", "miner", url, "hash", work[0], "target", work[1])
 		resp.Body.Close()
 	}
 }

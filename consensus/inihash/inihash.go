@@ -323,6 +323,10 @@ func (inihash *Inihash) Hashrate() float64 {
 	return inihash.hashrate.Rate1() + float64(<-res)
 }
 
+func (Inihash *Inihash) GetBlockReward(blockHeight uint64) *big.Int {
+	return CalBlockReward(blockHeight)
+}
+
 // APIs implements consensus.Engine, returning the user facing RPC APIs.
 func (inihash *Inihash) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	// In order to ensure backward compatibility, we exposes inihash RPC APIs
