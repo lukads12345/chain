@@ -113,5 +113,5 @@ func (api *API) GetHashrate() uint64 {
 
 // GetHashrate returns the current hashrate for local CPU miner and remote miner.
 func (api *API) GetBlockReward(number hexutil.Uint64) string {
-	return api.inihash.GetBlockReward(uint64(number)).Text(16)
+	return "0x" + api.inihash.GetBlockReward(uint64(number)).Text(16)
 }
