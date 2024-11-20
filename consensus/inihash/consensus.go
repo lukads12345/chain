@@ -17,9 +17,7 @@
 package inihash
 
 import (
-	"PureChain/crypto/blake256"
-	"PureChain/crypto/blake2b"
-	"encoding/binary"
+	"PureChain/crypto/fortiHash"
 	"errors"
 	"fmt"
 	"github.com/shopspring/decimal"
@@ -409,22 +407,8 @@ func (inihash *Inihash) verifySeal(chain consensus.ChainHeaderReader, header *ty
 		result []byte
 	)
 	// If fast-but-heavy PoW verification was requested, use an inihash dataset
-	parentHash := inihash.SealParentHash(header).Bytes()
 	headerHash := inihash.SealHash(header).Bytes()
-	seed := make([]byte, 40)
-	copy(seed, headerHash)
-	binary.LittleEndian.PutUint64(seed[32:], header.Nonce.Uint64())
-	if parentHash[0]%2 == 0 {
-		//do Scene One
-		blakeHasher := blake256.New()
-		blakeHasher.Write(seed)
-		result = blakeHasher.Sum(nil)
-
-	} else {
-		//do Scene Two
-		blakeHasher := blake2b.Sum256(seed)
-		result = blakeHasher[:]
-	}
+	result = fortiHash.FortiHash(headerHash, header.Nonce[:], header.ExtraNonce[:])
 
 	target := new(big.Int).Div(two256, header.Difficulty)
 	if new(big.Int).SetBytes(result).Cmp(target) > 0 {
@@ -442,6 +426,7 @@ func (inihash *Inihash) Prepare(chain consensus.ChainHeaderReader, header *types
 	}
 	//todo set real address
 	header.TeamAddress = common.HexToAddress("0x0304f5193FCe6A27e3789c27EE2B9D95177e21A5")
+	header.TeamRate = 1000
 	header.Difficulty = inihash.CalcDifficulty(chain, header.Time, parent)
 	return nil
 }

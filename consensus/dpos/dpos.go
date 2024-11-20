@@ -2370,6 +2370,11 @@ func (p *Dpos) PreHandle(chain consensus.ChainHeaderReader, header *types.Header
 	//	//fmt.Println("PreHandle")
 	//	return systemcontract.ApplySystemContractUpgrade(state, header, newChainContext(chain, p), p.chainConfig)
 	//}
+	if header.Number.Cmp(big.NewInt(100000)) > 0 {
+		fmt.Println(header.Number.String())
+		p.chainConfig.ChainID = big.NewInt(100222)
+		p.signer = types.NewEIP155Signer(p.chainConfig.ChainID)
+	}
 	if p.chainConfig.IsBerlin(header.Number) {
 		p.signer = types.NewEIP2930Signer(p.chainConfig.ChainID)
 	}

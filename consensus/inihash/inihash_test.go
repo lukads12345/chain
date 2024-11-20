@@ -121,7 +121,7 @@ func TestRemoteSealer(t *testing.T) {
 		t.Error("expect to return a mining work has same hash")
 	}
 
-	if res := api.SubmitWork(types.BlockNonce{}, sealhash); res {
+	if res := api.SubmitWork(types.BlockNonce{}, types.BlockNonce{}, sealhash); res {
 		t.Error("expect to return false when submit a fake solution")
 	}
 	// Push new block with same block number to replace the original one.

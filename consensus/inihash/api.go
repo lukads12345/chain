@@ -64,7 +64,7 @@ func (api *API) GetWork() ([4]string, error) {
 // SubmitWork can be used by external miner to submit their POW solution.
 // It returns an indication if the work was accepted.
 // Note either an invalid solution, a stale work a non-existent work will return false.
-func (api *API) SubmitWork(nonce types.BlockNonce, hash common.Hash) bool {
+func (api *API) SubmitWork(nonce types.BlockNonce, extraNonce types.BlockNonce, hash common.Hash) bool {
 	if api.inihash.remote == nil {
 		return false
 	}
@@ -72,9 +72,10 @@ func (api *API) SubmitWork(nonce types.BlockNonce, hash common.Hash) bool {
 	var errc = make(chan error, 1)
 	select {
 	case api.inihash.remote.submitWorkCh <- &mineResult{
-		nonce: nonce,
-		hash:  hash,
-		errc:  errc,
+		nonce:      nonce,
+		extraNonce: extraNonce,
+		hash:       hash,
+		errc:       errc,
 	}:
 	case <-api.inihash.remote.exitCh:
 		return false

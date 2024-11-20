@@ -34,6 +34,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 		ValidatorRate hexutil.Uint64 `json:"validator_rate"     gencodec:"required"`
 		TeamRate      hexutil.Uint64 `json:"team_rate"          gencodec:"required"`
 		Nonce         BlockNonce     `json:"nonce"`
+		ExtraNonce    BlockNonce     `json:"extra_nonce"`
 		Hash          common.Hash    `json:"hash"`
 	}
 	var enc Header
@@ -56,6 +57,7 @@ func (h Header) MarshalJSON() ([]byte, error) {
 	enc.ValidatorRate = hexutil.Uint64(h.ValidatorRate)
 	enc.TeamRate = hexutil.Uint64(h.TeamRate)
 	enc.Nonce = h.Nonce
+	enc.ExtraNonce = h.ExtraNonce
 	enc.Hash = h.Hash()
 	return json.Marshal(&enc)
 }
@@ -82,6 +84,7 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 		ValidatorRate *hexutil.Uint64 `json:"validator_rate"     gencodec:"required"`
 		TeamRate      *hexutil.Uint64 `json:"team_rate"          gencodec:"required"`
 		Nonce         *BlockNonce     `json:"nonce"`
+		ExtraNonce    *BlockNonce     `json:"extra_nonce"`
 	}
 	var dec Header
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -160,6 +163,9 @@ func (h *Header) UnmarshalJSON(input []byte) error {
 	h.TeamRate = uint64(*dec.TeamRate)
 	if dec.Nonce != nil {
 		h.Nonce = *dec.Nonce
+	}
+	if dec.ExtraNonce != nil {
+		h.ExtraNonce = *dec.ExtraNonce
 	}
 	return nil
 }

@@ -17,14 +17,14 @@
 package inihash
 
 import (
-	"PureChain/crypto/blake256"
-	"PureChain/crypto/blake2b"
+	"PureChain/crypto/fortiHash"
 	"bytes"
 	"context"
 	crand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -57,7 +57,7 @@ func (inihash *Inihash) Seal(chain consensus.ChainHeaderReader, block *types.Blo
 
 	if inihash.config.PowMode == ModeFake || inihash.config.PowMode == ModeFullFake {
 		header := block.Header()
-		header.Nonce, header.MixDigest = types.BlockNonce{}, common.Hash{}
+		header.Nonce, header.ExtraNonce, header.MixDigest = types.BlockNonce{}, types.BlockNonce{}, common.Hash{}
 		select {
 		case results <- block.WithSeal(header):
 		default:
@@ -141,7 +141,8 @@ func (inihash *Inihash) mine(block *types.Block, id int, seed uint64, abort chan
 		hash   = inihash.SealHash(header).Bytes()
 		target = new(big.Int).Div(two256, header.Difficulty)
 		//number     = header.Number.Uint64()
-		parentHash = inihash.SealParentHash(header).Bytes()
+		//parentHash = inihash.SealParentHash(header).Bytes()
+		extraNonce = header.ExtraNonce
 	)
 	// Start generating random nonces until we abort or find a good one
 	var (
@@ -170,19 +171,10 @@ search:
 
 			seedData := make([]byte, 40)
 			copy(seedData, hash)
-			binary.LittleEndian.PutUint64(seedData[32:], nonce)
+			var n types.BlockNonce
+			binary.BigEndian.PutUint64(n[:], nonce)
 			var result []byte
-			if parentHash[0]%2 == 0 {
-				//do Scene One
-				blakeHasher := blake256.New()
-				blakeHasher.Write(seedData)
-				result = blakeHasher.Sum(nil)
-
-			} else {
-				//do Scene Two
-				blakeHasher := blake2b.Sum256(seedData)
-				result = blakeHasher[:]
-			}
+			result = fortiHash.FortiHash(hash, n[:], extraNonce[:])
 			//digest, result := hashimotoFull(dataset.dataset, hash, nonce)
 			if new(big.Int).SetBytes(result).Cmp(target) <= 0 {
 				// Correct nonce found, create a new header with it
@@ -240,8 +232,9 @@ type sealTask struct {
 
 // mineResult wraps the pow solution parameters for the specified block.
 type mineResult struct {
-	nonce types.BlockNonce
-	hash  common.Hash
+	nonce      types.BlockNonce
+	extraNonce types.BlockNonce
+	hash       common.Hash
 
 	errc chan error
 }
@@ -313,7 +306,7 @@ func (s *remoteSealer) loop() {
 
 		case result := <-s.submitWorkCh:
 			// Verify submitted PoW solution based on maintained mining blocks.
-			if s.submitWork(result.nonce, result.hash) {
+			if s.submitWork(result.nonce, result.extraNonce, result.hash) {
 				result.errc <- nil
 			} else {
 				result.errc <- errInvalidSealResult
@@ -365,18 +358,13 @@ func (s *remoteSealer) loop() {
 //	result[3], hex encoded block number
 func (s *remoteSealer) makeWork(block *types.Block) {
 	hash := s.inihash.SealHash(block.Header())
-	parentHash := s.inihash.SealParentHash(block.Header())
-	var algo *big.Int
-	if parentHash[0]%2 == 0 {
-		algo = common.Big0
-	} else {
-		algo = common.Big1
-	}
+
 	s.currentWork[0] = hash.Hex()
 	//s.currentWork[1] = common.BytesToHash(SeedHash(block.NumberU64())).Hex()
 	s.currentWork[1] = common.BytesToHash(new(big.Int).Div(two256, block.Difficulty()).Bytes()).Hex()
 	s.currentWork[2] = hexutil.EncodeBig(block.Number())
-	s.currentWork[3] = hexutil.EncodeBig(algo)
+
+	s.currentWork[3] = fmt.Sprintf("%#x", block.Time())
 
 	// Trace the seal work fetched by remote sealer.
 	s.currentBlock = block
@@ -428,7 +416,7 @@ func (s *remoteSealer) sendNotification(ctx context.Context, url string, json []
 // submitWork verifies the submitted pow solution, returning
 // whether the solution was accepted or not (not can be both a bad pow as well as
 // any other error, like no pending work or stale mining result).
-func (s *remoteSealer) submitWork(nonce types.BlockNonce, sealhash common.Hash) bool {
+func (s *remoteSealer) submitWork(nonce types.BlockNonce, extraNonce types.BlockNonce, sealhash common.Hash) bool {
 	if s.currentBlock == nil {
 		s.inihash.config.Log.Error("Pending work without block", "sealhash", sealhash)
 		return false
@@ -442,6 +430,7 @@ func (s *remoteSealer) submitWork(nonce types.BlockNonce, sealhash common.Hash) 
 	// Verify the correctness of submitted result.
 	header := block.Header()
 	header.Nonce = nonce
+	header.ExtraNonce = extraNonce
 
 	start := time.Now()
 	if !s.noverify {

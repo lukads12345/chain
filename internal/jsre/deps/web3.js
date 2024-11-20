@@ -5542,7 +5542,7 @@ var methods = function () {
     var submitWork = new Method({
         name: 'submitWork',
         call: 'eth_submitWork',
-        params: 2
+        params: 3
     });
     var getBlockReward = new Method({
         name: 'getBlockReward',

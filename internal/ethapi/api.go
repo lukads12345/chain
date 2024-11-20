@@ -1186,6 +1186,7 @@ func RPCMarshalHeader(head *types.Header) map[string]interface{} {
 		"hash":             head.Hash(),
 		"parentHash":       head.ParentHash,
 		"nonce":            head.Nonce,
+		"extraNonce":       head.ExtraNonce,
 		"mixHash":          head.MixDigest,
 		"sha3Uncles":       head.UncleHash,
 		"logsBloom":        head.Bloom,
