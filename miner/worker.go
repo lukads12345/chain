@@ -1015,12 +1015,14 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			log.Error("Failed to prepare header for mining", "err", err)
 			return
 		}
+		if _, ok := w.engine.(*dpos.Dpos); ok {
+			diffInTurn := big.NewInt(2) // Block difficulty for in-turn signatures
+			//diffNoTurn := big.NewInt(1)
 
-		diffInTurn := big.NewInt(2) // Block difficulty for in-turn signatures
-		//diffNoTurn := big.NewInt(1)
-		if header.Difficulty.Cmp(diffInTurn) != 0 {
-			log.Info("not in turn", header.Difficulty, diffInTurn)
-			//return
+			if header.Difficulty.Cmp(diffInTurn) != 0 {
+				log.Info("not in turn", header.Difficulty, diffInTurn)
+				//return
+			}
 		}
 		//If we are care about TheDAO hard-fork check whether to override the extra-data or not
 		//if daoBlock := w.chainConfig.DAOForkBlock; daoBlock != nil {

@@ -17,7 +17,7 @@
 package inihash
 
 import (
-	"PureChain/crypto/fortiHash"
+	"PureChain/crypto/versaHash"
 	"errors"
 	"fmt"
 	"github.com/shopspring/decimal"
@@ -408,9 +408,10 @@ func (inihash *Inihash) verifySeal(chain consensus.ChainHeaderReader, header *ty
 	)
 	// If fast-but-heavy PoW verification was requested, use an inihash dataset
 	headerHash := inihash.SealHash(header).Bytes()
-	result = fortiHash.FortiHash(headerHash, header.Nonce[:], header.ExtraNonce[:])
+	result = versaHash.VersaHash(headerHash, header.Nonce[:], header.ExtraNonce[:])
 
 	target := new(big.Int).Div(two256, header.Difficulty)
+
 	if new(big.Int).SetBytes(result).Cmp(target) > 0 {
 		return errInvalidPoW
 	}

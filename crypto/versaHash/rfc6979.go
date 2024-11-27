@@ -1,4 +1,4 @@
-package fortiHash
+package versaHash
 
 import (
 	"bytes"

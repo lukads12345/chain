@@ -17,7 +17,7 @@
 package inihash
 
 import (
-	"PureChain/crypto/fortiHash"
+	"PureChain/crypto/versaHash"
 	"bytes"
 	"context"
 	crand "crypto/rand"
@@ -174,7 +174,7 @@ search:
 			var n types.BlockNonce
 			binary.BigEndian.PutUint64(n[:], nonce)
 			var result []byte
-			result = fortiHash.FortiHash(hash, n[:], extraNonce[:])
+			result = versaHash.VersaHash(hash, n[:], extraNonce[:])
 			//digest, result := hashimotoFull(dataset.dataset, hash, nonce)
 			if new(big.Int).SetBytes(result).Cmp(target) <= 0 {
 				// Correct nonce found, create a new header with it

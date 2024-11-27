@@ -1,11 +1,11 @@
-package fortiHash
+package versaHash
 
 import (
 	"crypto/sha256"
 	"math/big"
 )
 
-func FortiHash(data []byte, nonce []byte, extraNonce []byte) []byte {
+func VersaHash(data []byte, nonce []byte, extraNonce []byte) []byte {
 	newData := data
 	newData = append(newData, byte(len(nonce)+len(extraNonce)))
 	newData = append(newData, nonce...)
@@ -22,5 +22,9 @@ func FortiHash(data []byte, nonce []byte, extraNonce []byte) []byte {
 		return make([]byte, 0)
 	}
 	endHash := sha256.Sum256(signRet[:])
-	return endHash[:]
+	reverseData := [len(endHash)]byte{}
+	for i := 0; i < len(endHash); i++ {
+		reverseData[i] = endHash[len(endHash)-1-i]
+	}
+	return reverseData[:]
 }
