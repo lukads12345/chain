@@ -426,8 +426,8 @@ func (inihash *Inihash) Prepare(chain consensus.ChainHeaderReader, header *types
 		return consensus.ErrUnknownAncestor
 	}
 	//todo set real address
-	header.TeamAddress = common.HexToAddress("0x0304f5193FCe6A27e3789c27EE2B9D95177e21A5")
-	header.TeamRate = 1000
+	header.TeamAddress = common.Address{}
+	header.TeamRate = 0
 	header.Difficulty = inihash.CalcDifficulty(chain, header.Time, parent)
 	return nil
 }
@@ -526,9 +526,9 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		r.Div(blockReward, big32)
 		reward.Add(reward, r)
 	}
-	PersonalReward := big.NewInt(0).Div(big.NewInt(0).Mul(reward, big9), big10)
-	TeamReward := big.NewInt(0).Div(big.NewInt(0).Mul(reward, big1), big10)
+	PersonalReward := reward
+	//TeamReward := big.NewInt(0).Div(big.NewInt(0).Mul(reward, big1), big10)
 
 	state.AddBalance(header.Coinbase, PersonalReward)
-	state.AddBalance(header.TeamAddress, TeamReward)
+	//state.AddBalance(header.TeamAddress, TeamReward)
 }

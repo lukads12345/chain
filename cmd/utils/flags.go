@@ -1557,7 +1557,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	if ctx.GlobalBool(AddressTypeFlag.Name) {
 		common.AddressType = 1
 	} else {
-		common.AddressType = 2
+		common.AddressType = 1
 	}
 
 	// Cap the cache allowance and tune the garbage collector
