@@ -43,7 +43,7 @@ import (
 var (
 	BaseBlockReward               = big.NewInt(0).Mul(big.NewInt(145833333), big.NewInt(1e+11)) // Block reward in wei for successfully mining a block
 	maxUncles                     = 0                                                           // Maximum number of uncles allowed in a single block
-	allowedFutureBlockTimeSeconds = int64(40)                                                   // Max seconds from current time allowed for blocks, before they're considered future blocks
+	allowedFutureBlockTimeSeconds = int64(140)                                                  // Max seconds from current time allowed for blocks, before they're considered future blocks
 
 )
 
@@ -69,14 +69,8 @@ func (inihash *Inihash) Author(header *types.Header) (common.Address, error) {
 }
 
 func CalBlockReward(blockNumber uint64) *big.Int {
-
 	epoch := (blockNumber/20160)*20160 + 20160
-
-	//expRate := decimal.RequireFromString("-0.00000012096")
-	//e := decimal.NewFromFloat(math.E)
-
 	rate := math.Pow(math.E, float64(epoch)*float64(-0.00000012096))
-
 	rateStr := fmt.Sprintf("%.9f", rate)
 	rateDecimal, _ := decimal.NewFromString(rateStr)
 	rewardTmp := decimal.NewFromBigInt(BaseBlockReward, 0).Mul(rateDecimal)
@@ -116,13 +110,11 @@ func (inihash *Inihash) VerifyHeaders(chain consensus.ChainHeaderReader, headers
 		}
 		return abort, results
 	}
-
 	// Spawn as many workers as allowed threads
 	workers := runtime.GOMAXPROCS(0)
 	if len(headers) < workers {
 		workers = len(headers)
 	}
-
 	// Create a task channel and spawn the verifiers
 	var (
 		inputs  = make(chan int)
@@ -346,19 +338,15 @@ func calcDifficulty(time uint64, parent *types.Header) *big.Int {
 	// diff = (parent_diff +
 	//         (parent_diff / 12288 * max(6 - (block_timestamp - parent_timestamp) // 5, -599))
 	//        )
-
 	bigTime := new(big.Int).SetUint64(time)
 	bigParentTime := new(big.Int).SetUint64(parent.Time)
-
 	// holds intermediate values to make the algo easier to read & audit
 	x := new(big.Int)
 	y := new(big.Int)
-
 	// 1 - (block_timestamp - parent_timestamp) // 10
 	x.Sub(bigTime, bigParentTime)
 	x.Div(x, big5)
 	x.Sub(big6, x)
-
 	// max(1 - (block_timestamp - parent_timestamp) // 10, -99)
 	if x.Cmp(bigMinus599) < 0 {
 		x.Set(bigMinus599)
