@@ -7,11 +7,11 @@ on:
   push:
     branches:
       - "master"
-      - "3.0"
+      - "genesis-testnet"
   pull_request:
     branches:
     - "master"
-    - "3.0"
+    - "genesis-testnet"
   workflow_dispatch:
 
 env:
