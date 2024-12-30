@@ -69,7 +69,7 @@ func TestCacheFileEvict(t *testing.T) {
 		CacheDir:     tmpdir,
 		PowMode:      ModeTest,
 	}
-	e := New(config, nil, false)
+	e := New(config, nil, false, nil)
 	defer e.Close()
 
 	workers := 8

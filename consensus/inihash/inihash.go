@@ -54,7 +54,7 @@ func init() {
 		CachesInMem:   3,
 		DatasetsInMem: 1,
 	}
-	sharedEthash = New(sharedConfig, nil, false)
+	sharedEthash = New(sharedConfig, nil, false, nil)
 }
 
 // isLittleEndian returns whether the local system is running in little or big
@@ -149,8 +149,8 @@ type Config struct {
 // Inihash is a consensus engine based on proof-of-work implementing the inihash
 // algorithm.
 type Inihash struct {
-	config Config
-
+	config  Config
+	chainId *big.Int
 	// Mining related fields
 	rand     *rand.Rand    // Properly seeded random source for nonces
 	threads  int           // Number of threads to mine on if mining
@@ -170,7 +170,7 @@ type Inihash struct {
 // New creates a full sized inihash PoW scheme and starts a background thread for
 // remote mining, also optionally notifying a batch of remote services of new work
 // packages.
-func New(config Config, notify []string, noverify bool) *Inihash {
+func New(config Config, notify []string, noverify bool, chainId *big.Int) *Inihash {
 	if config.Log == nil {
 		config.Log = log.Root()
 	}
@@ -188,6 +188,7 @@ func New(config Config, notify []string, noverify bool) *Inihash {
 		config:   config,
 		update:   make(chan struct{}),
 		hashrate: metrics.NewMeterForced(),
+		chainId:  chainId,
 	}
 	if config.PowMode == ModeShared {
 		ethash.shared = sharedEthash
@@ -199,7 +200,7 @@ func New(config Config, notify []string, noverify bool) *Inihash {
 // NewTester creates a small sized inihash PoW scheme useful only for testing
 // purposes.
 func NewTester(notify []string, noverify bool) *Inihash {
-	return New(Config{PowMode: ModeTest}, notify, noverify)
+	return New(Config{PowMode: ModeTest}, notify, noverify, nil)
 }
 
 // NewFaker creates a inihash consensus engine with a fake PoW scheme that accepts
@@ -324,7 +325,13 @@ func (inihash *Inihash) Hashrate() float64 {
 }
 
 func (Inihash *Inihash) GetBlockReward(blockHeight uint64) *big.Int {
-	return CalBlockReward(blockHeight)
+	if Inihash.chainId == nil {
+		return CalBlockReward(blockHeight, 1)
+	} else if Inihash.chainId.Int64() == 7233 {
+		return CalBlockReward(blockHeight, 50)
+	} else {
+		return CalBlockReward(blockHeight, 1)
+	}
 }
 
 // APIs implements consensus.Engine, returning the user facing RPC APIs.

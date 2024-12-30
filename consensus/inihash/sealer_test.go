@@ -98,7 +98,7 @@ func TestRemoteNotifyFull(t *testing.T) {
 		NotifyFull: true,
 		Log:        testlog.Logger(t, log.LvlWarn),
 	}
-	ethash := New(config, []string{server.URL}, false)
+	ethash := New(config, []string{server.URL}, false, nil)
 	defer ethash.Close()
 
 	// Stream a work task and ensure the notification bubbles out.
@@ -188,7 +188,7 @@ func TestRemoteMultiNotifyFull(t *testing.T) {
 		NotifyFull: true,
 		Log:        testlog.Logger(t, log.LvlWarn),
 	}
-	ethash := New(config, []string{server.URL}, false)
+	ethash := New(config, []string{server.URL}, false, nil)
 	defer ethash.Close()
 
 	// Provide a results reader.
@@ -268,7 +268,7 @@ func TestStaleSubmission(t *testing.T) {
 		for _, h := range c.headers {
 			ethash.Seal(nil, types.NewBlockWithHeader(h), results, nil)
 		}
-		if res := api.SubmitWork(fakeNonce, ethash.SealHash(c.headers[c.submitIndex])); res != c.submitRes {
+		if res := api.SubmitWork(fakeNonce, fakeNonce, ethash.SealHash(c.headers[c.submitIndex])); res != c.submitRes {
 			t.Errorf("case %d submit result mismatch, want %t, get %t", id+1, c.submitRes, res)
 		}
 		if !c.submitRes {

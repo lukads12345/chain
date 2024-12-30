@@ -68,12 +68,13 @@ func (inihash *Inihash) Author(header *types.Header) (common.Address, error) {
 	return header.Coinbase, nil
 }
 
-func CalBlockReward(blockNumber uint64) *big.Int {
+func CalBlockReward(blockNumber uint64, multi uint64) *big.Int {
 	epoch := (blockNumber/20160)*20160 + 20160
 	rate := math.Pow(math.E, float64(epoch)*float64(-0.00000012096))
 	rateStr := fmt.Sprintf("%.9f", rate)
 	rateDecimal, _ := decimal.NewFromString(rateStr)
-	rewardTmp := decimal.NewFromBigInt(BaseBlockReward, 0).Mul(rateDecimal)
+
+	rewardTmp := decimal.NewFromBigInt(BaseBlockReward, 0).Mul(rateDecimal).Mul(decimal.NewFromUint64(multi))
 
 	return rewardTmp.BigInt()
 }
@@ -500,7 +501,14 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		return
 	}
 	// Select the correct block reward based on chain progression
-	blockReward := CalBlockReward(header.Number.Uint64())
+	var blockReward *big.Int
+	if config.ChainID.Int64() == 7233 {
+		//mainnet
+		blockReward = CalBlockReward(header.Number.Uint64(), 50)
+	} else {
+		blockReward = CalBlockReward(header.Number.Uint64(), 1)
+	}
+
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(big.Int).Set(blockReward)
 	r := new(big.Int)
