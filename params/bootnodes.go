@@ -22,9 +22,9 @@ import "PureChain/common"
 // the main Ethereum network.
 var MainnetBootnodes = []string{
 	// Ethereum Foundation Go Bootnodes
-	//"enode://210d9d51a35d29ba5ef4c4c9f7512f492417e258bf71144c6eb4bd47df08170e80873f0f5768b814c08877c3f1a32eb1d60c292f2cbe20be6826f41be5dc03e0@bootnode0.inichain.com:30301",
-	//"enode://8d7e62fee7e364f308dedfd0a3a71c68ffc41e3abdf7be2eb7e0ae05291e0f709db33c292fa39a0b7648fa4dc33573b7141df26b2d828482d6a5e6baca353c81@bootnode1.inichain.com:30301",
-	//"enode://ded15ac04a75a8c08be778437f2f8ac3a4f5bf636b05b2ee76b1a9e0ccc7b2034606c104e0b5e3b59f345fac9c27b70a91a0be3368e96b8f8ad0d0923b27bafd@bootnode2.inichain.com:30301",
+	"enode://210d9d51a35d29ba5ef4c4c9f7512f492417e258bf71144c6eb4bd47df08170e80873f0f5768b814c08877c3f1a32eb1d60c292f2cbe20be6826f41be5dc03e0@bootnode-a.genesis-mainnet.inichain.com:30301",
+	"enode://8d7e62fee7e364f308dedfd0a3a71c68ffc41e3abdf7be2eb7e0ae05291e0f709db33c292fa39a0b7648fa4dc33573b7141df26b2d828482d6a5e6baca353c81@bootnode-b.genesis-mainnet.inichain.com:30301",
+	"enode://ded15ac04a75a8c08be778437f2f8ac3a4f5bf636b05b2ee76b1a9e0ccc7b2034606c104e0b5e3b59f345fac9c27b70a91a0be3368e96b8f8ad0d0923b27bafd@bootnode-c.genesis-mainnet.inichain.com:30301",
 }
 var TestnetBootnodes = []string{
 	// Ethereum Foundation Go Bootnodes
