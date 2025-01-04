@@ -1,40 +1,53 @@
-## InitVerse Chain
+## Welcome to INIChain
 
-The goal of InitVerse Chain is to provide a decentralized cloud service platform. In order to embrace the existing popular community and advanced technology, it will bring huge benefits by staying compatible with all the existing smart contracts on Ethereum and Ethereum tooling. And to achieve that, the easiest solution is to develop based on go-ethereum fork, as we respect the great work of Ethereum very much.
+**INIChain** is a high-performance blockchain designed to provide privacy, scalability, and decentralization for the next generation of Web3 applications. Powered by **TfhEVM** (TFHE-based Ethereum Virtual Machine), INIChain integrates Fully Homomorphic Encryption on Torus (TFHE) with EVM compatibility, allowing encrypted data to be processed securely without decryption. This provides unparalleled privacy and security for sensitive data, making INIChain ideal for privacy-critical applications.
 
-InitVerse Chain starts its development based on go-ethereum fork. So you may see many toolings, binaries and also docs are based on Ethereum ones, such as the name “geth”.
+Learn more: https://resource.inichain.com/whitepaper.pdf
 
-But from that baseline of EVM compatible, InitVerse Chain introduces  a system of 63 validators with Proof of Resources (PoR) consensus that can support short block time and lower fees. The most bonded provider candidates of staking have a higher probability of receiving block rewards. The double-sign detection and other slashing logic guarantee security, stability, and chain finality.
+**INIChain Highlights**
 
-- **A self-sovereign blockchain**: Provides security and safety with elected validators.
-- **EVM-compatible**: Supports all the existing Ethereum tooling along with faster finality and cheaper transaction fees.
-- **Interoperable**: Comes with efficient native dual chain communication; Optimized for scaling high-performance dApps that require fast and smooth user experience.
-- **Distributed with on-chain governance**: Proof of Staked Authority brings in decentralization and community participants. As the native token, DCB will serve as both the gas of smart contract execution and tokens for staking.
+INIChain offers the following key benefits and capabilities:
 
-More details in [White Paper](https://resource.inichain.com/whitepaper.pdf).
+- **Privacy-Preserving Smart Contracts**: Leverage TFHE to enable encrypted computations, ensuring that sensitive data remains protected throughout the execution of smart contracts.
 
-## Key features
+- **EVM Compatibility**: Seamlessly deploy existing Ethereum dApps without requiring code rewrites, reducing costs and time-to-market for developers.
 
-### Proof of Resources
-Although Proof-of-Work (PoW) has been approved as a practical mechanism to implement a decentralized network, it is not friendly to the environment and also requires a large size of participants to maintain the security. 
+- **Scalable and Secure**: Using **VersaHash** and **DDA (Dual Dynamic Adjustment)**, INIChain ensures secure and efficient processing of transactions while maintaining decentralization and network stability.
 
-Proof of Resource (POR) is a new type of Proof of Resource. He produces blocks through the collaborative operation of validator and provider. Our scheme is an interactive protocol in which the prover ρ: (a) promises to provide a declared amount of cloud computing resources, and then (b) convinces the validator through a challenge protocol that ρ has indeed provided the declared amount of cloud computing resources, And the validator submits the result to the chain to prove to other validators that the provider has indeed provided the declared amount of cloud computing resources. This scheme can prevent sybil attacks, outsourcing attacks, and selfish mining.
+- **Optimized for Performance**: High throughput and low latency, designed to handle complex use cases with ease.
 
-Other blockchains, such as EOS and Cosmos both, introduce different types of Deputy Proof of Stake (DPoS) to allow the token holders to vote and elect the validator set. It increases the decentralization and favors community governance. 
+- **Developer-Friendly**: Supports C and C++ for intensive TFHE operations and offers low-code tools to speed up Web3 application development.
 
-To combine DPoS and PoA for consensus, InitVerse Chain implement a novel consensus engine called Parlia that:
+INIChain is the ideal foundation for secure, scalable, and privacy-conscious Web3 projects, offering enterprise-grade solutions for developers and businesses alike. As INIChain launches its mainnet, it will empower developers to build decentralized applications with the highest standards of privacy, security, and performance.
 
-1. Blocks are produced by a limited set of validators.
-2. Validators take turns to produce blocks in a POR manner, similar to Ethereum's Clique consensus engine.
-3. Parlia consensus engine will interact with a set of [system contracts](https://github.com/Project-InitVerse/ini-chain-system-contract) to achieve liveness slash, revenue distributing and validator set renewing func.
+## INIChain Architecture
 
+**INIChain Overview**
 
-## Native Token
+INIChain is a permissionless blockchain built to provide scalability, efficiency, and enhanced privacy. It is designed to support high-performance decentralized applications (dApps) by integrating the **TfhEVM** for encrypted computations and dynamic transaction management.
 
-UBI will run on InitVerse Chain in the same way as ETH runs on Ethereum so that it remains as `native token` for BSC. This means,
-UBI will be used to:
+**High-Performance Data Processing**
 
-1. pay `gas` to deploy or invoke Smart Contract on InitVerse
+INIChain's architecture supports parallel block generation to ensure that both high-privacy and standard blocks can be processed simultaneously, improving performance and reducing delays.
+
+**Security and Efficiency with VersaHash**
+
+VersaHash, a core component of INIChain, enhances security and efficiency through multi-stage hashing, ensuring data integrity and immutability.
+
+**Dual Dynamic Adjustment (DDA)**
+
+DDA allows dynamic adjustments of block difficulty and computational resources, balancing privacy and performance, optimizing resource usage, and improving scalability.
+
+**Developer Tools**
+
+INIChain supports **C, C++**, and **Solidity**, enabling developers to interact with the blockchain easily while maintaining the highest standards of privacy protection and data security.
+
+## INIChain Token (INI)
+
+INIChain’s native token, **INI**, serves as the fuel for the network, enabling transaction fees, staking, and governance. The token follows a **halving mechanism**, ensuring a gradual release of tokens to promote long-term stability and community growth.
+
+Become a node today:https://resource.inichain.com/whitepaper.pdf
+
 
 ## Building the source
 
