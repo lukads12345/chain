@@ -46,7 +46,7 @@ INIChain supports **C, C++**, and **Solidity**, enabling developers to interact 
 
 INIChain’s native token, **INI**, serves as the fuel for the network, enabling transaction fees, staking, and governance. The token follows a **halving mechanism**, ensuring a gradual release of tokens to promote long-term stability and community growth.
 
-Become a node today:https://resource.inichain.com/whitepaper.pdf
+Become a node today: https://github.com/Project-InitVerse/miner/releases
 
 
 ## Building the source
