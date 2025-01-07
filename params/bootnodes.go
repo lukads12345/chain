@@ -25,6 +25,9 @@ var MainnetBootnodes = []string{
 	"enode://210d9d51a35d29ba5ef4c4c9f7512f492417e258bf71144c6eb4bd47df08170e80873f0f5768b814c08877c3f1a32eb1d60c292f2cbe20be6826f41be5dc03e0@bootnode-a.genesis-mainnet.inichain.com:30301",
 	"enode://8d7e62fee7e364f308dedfd0a3a71c68ffc41e3abdf7be2eb7e0ae05291e0f709db33c292fa39a0b7648fa4dc33573b7141df26b2d828482d6a5e6baca353c81@bootnode-b.genesis-mainnet.inichain.com:30301",
 	"enode://ded15ac04a75a8c08be778437f2f8ac3a4f5bf636b05b2ee76b1a9e0ccc7b2034606c104e0b5e3b59f345fac9c27b70a91a0be3368e96b8f8ad0d0923b27bafd@bootnode-c.genesis-mainnet.inichain.com:30301",
+	"enode://804b480e6716289b3fcdeea2922489b25ded5b49d6ad34707bb708c585bdfde4ea822e4c4d6abdcd06c51c9ef16506e2da3ec5c95c4c569fb4e80312fad1115a@bootnode-a.genesis-mainnet.inichain.com:30304",
+	"enode://863e6776fe0553af089e3783d2ca57df48215d64567f81ffb874095e6fe190dc14b3416ef79eac4d543846b37413f679d7b9e0fc30c69dea4666af9d0dc38200@bootnode-b.genesis-mainnet.inichain.com:30304",
+	"enode://73a2a84a866f1db24a9bfffd511f59751985090b861bb82fe26927fba4d89b3c66237fcc72ce2d3528025f761da2c223e4ec76eec6cb0bc0109067dcd8a63acc@bootnode-c.genesis-mainnet.inichain.com:30304",
 }
 var TestnetBootnodes = []string{
 	// Ethereum Foundation Go Bootnodes
