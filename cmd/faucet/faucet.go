@@ -22,6 +22,7 @@ package main
 
 import (
 	"bytes"
+	"container/list"
 	"context"
 	"encoding/json"
 	"errors"
@@ -210,7 +211,7 @@ func main() {
 		log.Crit("Failed to start faucet", "err", err)
 	}
 	defer faucet.close()
-
+	safeQueue = NewSafeQueue()
 	if err := faucet.listenAndServe(*apiPortFlag); err != nil {
 		log.Crit("Failed to launch faucet API", "err", err)
 	}
@@ -260,6 +261,54 @@ type faucet struct {
 type wsConn struct {
 	conn  *websocket.Conn
 	wlock sync.Mutex
+}
+
+type SafeQueue struct {
+	list  *list.List
+	mutex sync.Mutex
+}
+
+var safeQueue *SafeQueue
+
+func NewSafeQueue() *SafeQueue {
+	return &SafeQueue{
+		list:  list.New(),
+		mutex: sync.Mutex{},
+	}
+}
+
+func (sq *SafeQueue) Enqueue(value interface{}) {
+	sq.mutex.Lock()
+	defer sq.mutex.Unlock()
+	sq.list.PushBack(value)
+}
+
+func (sq *SafeQueue) Dequeue() interface{} {
+	sq.mutex.Lock()
+	defer sq.mutex.Unlock()
+	elem := sq.list.Front()
+
+	if elem == nil {
+		return nil
+	}
+	sq.list.Remove(elem)
+	return elem.Value
+}
+func (sq *SafeQueue) First() interface{} {
+	sq.mutex.Lock()
+	defer sq.mutex.Unlock()
+	elem := sq.list.Front()
+
+	if elem == nil {
+		return nil
+	}
+	return elem.Value
+}
+
+func (sq *SafeQueue) Size() int {
+	sq.mutex.Lock()
+	defer sq.mutex.Unlock()
+	return sq.list.Len()
 }
 
 func newFaucet(genesis *core.Genesis, port int, enodes []*enode.Node, network uint64, stats string, ks *keystore.KeyStore, index []byte, bep2eInfos map[string]bep2eInfo) (*faucet, error) {
@@ -344,6 +393,7 @@ func (f *faucet) close() error {
 // for service user funding requests.
 func (f *faucet) listenAndServe(port int) error {
 	go f.loop()
+	go f.doReSendLoop()
 
 	http.HandleFunc("/", f.webHandler)
 	http.HandleFunc("/api", f.apiHandler)
@@ -589,6 +639,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			// Submit the transaction and mark as funded if successful
+
 			if err := f.client.SendTransaction(context.Background(), signed); err != nil {
 				f.lock.Unlock()
 				if err = sendError(wsconn, err); err != nil {
@@ -597,6 +648,7 @@ func (f *faucet) apiHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
+			safeQueue.Enqueue(*signed)
 			f.reqs = append(f.reqs, &request{
 				Avatar:  avatar,
 				Account: address,
@@ -1014,4 +1066,54 @@ func authNoAuth(url string) (string, string, common.Address, error) {
 		return "", "", common.Address{}, errors.New("No INI Smart Chain address found to fund")
 	}
 	return address.Hex() + "@noauth", "", address, nil
+}
+func (f *faucet) doReSendLoop() {
+	for {
+		log.Info("safeQueue size", "size", safeQueue.Size())
+		if safeQueue.Size() > 0 {
+			count := 10
+			if count > safeQueue.Size() {
+				count = safeQueue.Size()
+			}
+			localContext := context.Background()
+			currentHead, err := f.client.BlockNumber(localContext)
+			if err != nil {
+				time.Sleep(100 * time.Second)
+				continue
+			}
+			for i := 0; i < count; i++ {
+				signedTx := safeQueue.Dequeue().(types.Transaction)
+				txid := signedTx.Hash()
+				ret, err := f.client.TransactionDataAndReceipt(localContext, txid)
+				log.Debug("TransactionDataAndReceipt", "tx", ret, "err", err)
+				if err != nil {
+
+					if err == core.ErrNonceTooLow {
+						log.Error("find nonce too low transaction ", "txid", txid, "txTo", signedTx.To().String(), "nonce", signedTx.Nonce())
+
+					} else {
+						log.Debug("resend transaction ", "txid", txid)
+						f.client.SendTransaction(localContext, &signedTx)
+						safeQueue.Enqueue(signedTx)
+					}
+
+				} else {
+					if ret.Receipt.BlockNumber == nil {
+						log.Debug("resend transaction because not in chain block", "txid", txid)
+						f.client.SendTransaction(localContext, &signedTx)
+						safeQueue.Enqueue(signedTx)
+					} else if ret.Receipt.BlockNumber.Uint64()+10 > currentHead {
+						log.Debug("resend transaction because not meet safe block height", "txid", txid)
+						//f.client.SendTransaction(localContext, &signedTx)
+						safeQueue.Enqueue(signedTx)
+					}
+				}
+
+			}
+			time.Sleep(time.Second * 100)
+		} else {
+			time.Sleep(time.Second * 100)
+		}
+
+	}
 }
