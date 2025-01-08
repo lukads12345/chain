@@ -1071,10 +1071,8 @@ func (f *faucet) doReSendLoop() {
 	for {
 		log.Info("safeQueue size", "size", safeQueue.Size())
 		if safeQueue.Size() > 0 {
-			count := 10
-			if count > safeQueue.Size() {
-				count = safeQueue.Size()
-			}
+			count := safeQueue.Size()
+
 			localContext := context.Background()
 			currentHead, err := f.client.BlockNumber(localContext)
 			if err != nil {
