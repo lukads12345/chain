@@ -21,6 +21,7 @@ package main
 //go:generate gofmt -w -s website.go
 
 import (
+	"PureChain/common/hexutil"
 	"bytes"
 	"container/list"
 	"context"
@@ -92,6 +93,7 @@ var (
 	fixGasPrice        = flag.Int64("faucet.fixedprice", 0, "Will use fixed gas price if specified")
 	twitterTokenFlag   = flag.String("twitter.token", "", "Bearer token to authenticate with the v2 Twitter API")
 	twitterTokenV1Flag = flag.String("twitter.token.v1", "", "Bearer token to authenticate with the v1.1 Twitter API")
+	ethApiFlag         = flag.String("ethApi", "", "resend transaction through rpc")
 )
 
 var (
@@ -1067,51 +1069,99 @@ func authNoAuth(url string) (string, string, common.Address, error) {
 	}
 	return address.Hex() + "@noauth", "", address, nil
 }
+
+func (f *faucet) rpcSendRawTransaction(tx *types.Transaction) {
+
+	url := *ethApiFlag
+	method := "POST"
+	data, err := tx.MarshalBinary()
+	if err != nil {
+		log.Info(err.Error())
+		return
+	}
+
+	jsonStr := fmt.Sprintf(`{"id":"2","jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"]}`, hexutil.Encode(data))
+	payload := strings.NewReader(jsonStr)
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, payload)
+
+	if err != nil {
+		log.Info(err.Error())
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		log.Info(err.Error())
+		return
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Info(err.Error())
+		return
+	} else {
+		log.Info(string(body))
+	}
+
+}
+
 func (f *faucet) doReSendLoop() {
 	for {
-		log.Info("safeQueue size", "size", safeQueue.Size())
-		if safeQueue.Size() > 0 {
-			count := safeQueue.Size()
+		if ethApiFlag != nil && len(*ethApiFlag) > 0 {
+			log.Info("safeQueue size", "size", safeQueue.Size())
+			if safeQueue.Size() > 0 {
+				count := safeQueue.Size()
 
-			localContext := context.Background()
-			currentHead, err := f.client.BlockNumber(localContext)
-			if err != nil {
-				time.Sleep(100 * time.Second)
-				continue
-			}
-			for i := 0; i < count; i++ {
-				signedTx := safeQueue.Dequeue().(types.Transaction)
-				txid := signedTx.Hash()
-				ret, err := f.client.TransactionDataAndReceipt(localContext, txid)
-				log.Debug("TransactionDataAndReceipt", "tx", ret, "err", err)
+				localContext := context.Background()
+				currentHead, err := f.client.BlockNumber(localContext)
 				if err != nil {
+					time.Sleep(100 * time.Second)
+					continue
+				}
+				for i := 0; i < count; i++ {
+					signedTx := safeQueue.Dequeue().(types.Transaction)
+					txid := signedTx.Hash()
+					ret, err := f.client.TransactionDataAndReceipt(localContext, txid)
+					log.Debug("TransactionDataAndReceipt", "tx", ret, "err", err)
+					if err != nil {
 
-					if err == core.ErrNonceTooLow {
-						log.Error("find nonce too low transaction ", "txid", txid, "txTo", signedTx.To().String(), "nonce", signedTx.Nonce())
+						if err == core.ErrNonceTooLow {
+							log.Error("find nonce too low transaction ", "txid", txid, "txTo", signedTx.To().String(), "nonce", signedTx.Nonce())
+
+						} else {
+							log.Debug("resend transaction ", "txid", txid)
+							f.rpcSendRawTransaction(&signedTx)
+							safeQueue.Enqueue(signedTx)
+						}
 
 					} else {
-						log.Debug("resend transaction ", "txid", txid)
-						f.client.SendTransaction(localContext, &signedTx)
-						safeQueue.Enqueue(signedTx)
+						if ret.Receipt.BlockNumber == nil {
+							log.Debug("resend transaction because not in chain block", "txid", txid)
+							f.rpcSendRawTransaction(&signedTx)
+							safeQueue.Enqueue(signedTx)
+						} else if ret.Receipt.BlockNumber.Uint64()+10 > currentHead {
+							log.Debug("resend transaction because not meet safe block height", "txid", txid)
+							//f.client.SendTransaction(localContext, &signedTx)
+							safeQueue.Enqueue(signedTx)
+						}
 					}
 
-				} else {
-					if ret.Receipt.BlockNumber == nil {
-						log.Debug("resend transaction because not in chain block", "txid", txid)
-						f.client.SendTransaction(localContext, &signedTx)
-						safeQueue.Enqueue(signedTx)
-					} else if ret.Receipt.BlockNumber.Uint64()+10 > currentHead {
-						log.Debug("resend transaction because not meet safe block height", "txid", txid)
-						//f.client.SendTransaction(localContext, &signedTx)
-						safeQueue.Enqueue(signedTx)
-					}
 				}
-
+				time.Sleep(time.Second * 100)
+			} else {
+				time.Sleep(time.Second * 100)
 			}
-			time.Sleep(time.Second * 100)
 		} else {
-			time.Sleep(time.Second * 100)
+			count := safeQueue.Size()
+			for i := 0; i < count; i++ {
+				safeQueue.Dequeue()
+			}
+			time.Sleep(100 * time.Second)
 		}
-
 	}
+
 }
