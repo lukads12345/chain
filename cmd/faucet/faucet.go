@@ -1070,14 +1070,14 @@ func authNoAuth(url string) (string, string, common.Address, error) {
 	return address.Hex() + "@noauth", "", address, nil
 }
 
-func (f *faucet) rpcSendRawTransaction(tx *types.Transaction) {
+func (f *faucet) rpcSendRawTransaction(tx *types.Transaction) string {
 
 	url := *ethApiFlag
 	method := "POST"
 	data, err := tx.MarshalBinary()
 	if err != nil {
 		log.Info(err.Error())
-		return
+		return ""
 	}
 
 	jsonStr := fmt.Sprintf(`{"id":"2","jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["%s"]}`, hexutil.Encode(data))
@@ -1088,24 +1088,25 @@ func (f *faucet) rpcSendRawTransaction(tx *types.Transaction) {
 
 	if err != nil {
 		log.Info(err.Error())
-		return
+		return ""
 	}
 	req.Header.Add("Content-Type", "application/json")
 
 	res, err := client.Do(req)
 	if err != nil {
 		log.Info(err.Error())
-		return
+		return ""
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Info(err.Error())
-		return
+		return ""
 	} else {
 		log.Info(string(body))
 	}
+	return string(body)
 
 }
 
@@ -1134,15 +1135,24 @@ func (f *faucet) doReSendLoop() {
 
 						} else {
 							log.Debug("resend transaction ", "txid", txid)
-							f.rpcSendRawTransaction(&signedTx)
-							safeQueue.Enqueue(signedTx)
+							ret := f.rpcSendRawTransaction(&signedTx)
+							if strings.Contains(ret, "nonce too low") {
+								log.Info("transaction is replace by other transaction", "txid", txid)
+							} else {
+								safeQueue.Enqueue(signedTx)
+							}
+
 						}
 
 					} else {
 						if ret.Receipt.BlockNumber == nil {
 							log.Debug("resend transaction because not in chain block", "txid", txid)
-							f.rpcSendRawTransaction(&signedTx)
-							safeQueue.Enqueue(signedTx)
+							ret := f.rpcSendRawTransaction(&signedTx)
+							if strings.Contains(ret, "nonce too low") {
+								log.Info("transaction is replace by other transaction", "txid", txid)
+							} else {
+								safeQueue.Enqueue(signedTx)
+							}
 						} else if ret.Receipt.BlockNumber.Uint64()+10 > currentHead {
 							log.Debug("resend transaction because not meet safe block height", "txid", txid)
 							//f.client.SendTransaction(localContext, &signedTx)
